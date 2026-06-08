@@ -1,0 +1,10 @@
+fastapi[standard]
+uvicorn
+sqlmodel
+psycopg2-binary
+python-dotenv
+pydantic-settings
+sqlalchemy2-stubs
+pyjwt
+passlib[bcrypt]
+bcrypt==4.0.1
