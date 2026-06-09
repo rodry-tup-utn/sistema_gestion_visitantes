@@ -35,6 +35,22 @@ def seed():
         else:
             print("→ Usuarios ya existen, se omite creación de admin")
 
+            # ─── Usuario operador ───
+        existing_operator = session.exec(select(User).where(User.email == "operador@test.com")).first()
+        if not existing_operator:
+            oper = User(
+                lastname="Operador",
+                name="Operador",
+                email="operador@test.com",
+                hashed_pass=get_password_hash("operador123"),
+                role=Role.OPERATOR,
+            )
+            session.add(oper)
+            session.commit()
+            print("✓ Usuario operador creado (operador@test.com / operador123)")
+        else:
+            print("→ Operador ya existe, se omite")
+
         # ─── Personas ───
         existing_persona = session.exec(select(Persona)).first()
         if not existing_persona:

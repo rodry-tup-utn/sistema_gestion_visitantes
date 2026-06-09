@@ -17,6 +17,7 @@ from app.modules.internacion.schemas import (
     InternacionFiltro,
     InternacionCreate,
     InternacionUpdate,
+    InternacionEstadoUpdate,
     InternacionResponse,
     InternacionPaginatedRead,
     ServicioAmbulatorioCreate,
@@ -46,7 +47,7 @@ def get_sa_service(session: Session = Depends(get_session)):
 servicio_internacion_router = APIRouter(
     prefix="/admin/servicio-internacion",
     tags=["Servicios de Internación"],
-    dependencies=[Depends(require_role(["ADMIN"]))],
+    dependencies=[Depends(require_role(["ADMIN", "OPERATOR"]))],
 )
 
 
@@ -81,8 +82,16 @@ def update_si(
 internacion_router = APIRouter(
     prefix="/admin/internacion",
     tags=["Camas de Internación"],
-    dependencies=[Depends(require_role(["ADMIN"]))],
+    dependencies=[Depends(require_role(["ADMIN", "OPERATOR"]))],
 )
+
+@internacion_router.patch("/{id}/estado", response_model=InternacionResponse)
+def update_int_estado(
+    id: Annotated[int, Path(ge=1)],
+    data: InternacionEstadoUpdate,
+    svc: InternacionService = Depends(get_int_service),
+):
+    return svc.update_estado(id, data)
 
 
 @internacion_router.post("/", response_model=InternacionResponse, status_code=status.HTTP_201_CREATED)
@@ -112,7 +121,7 @@ def update_int(
 servicio_ambulatorio_router = APIRouter(
     prefix="/admin/servicio-ambulatorio",
     tags=["Servicios Ambulatorios"],
-    dependencies=[Depends(require_role(["ADMIN"]))],
+    dependencies=[Depends(require_role(["ADMIN", "OPERATOR"]))],
 )
 
 
@@ -151,7 +160,7 @@ def get_oc_service(session: Session = Depends(get_session)):
 ocupacion_router = APIRouter(
     prefix="/admin/ocupacion",
     tags=["Ocupación de Pacientes"],
-    dependencies=[Depends(require_role(["ADMIN"]))],
+    dependencies=[Depends(require_role(["ADMIN", "OPERATOR"]))],
 )
 
 

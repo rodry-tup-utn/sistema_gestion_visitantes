@@ -7,6 +7,10 @@ from app.modules.internacion.repository import (
     ServicioAmbulatorioRepository,
     OcupacionPacienteRepository,
 )
+from app.modules.visit.repository import (
+    AccesoInternacionRepository,
+    AccesoAmbulatorioRepository,
+)
 
 
 class UnitOfWork:
@@ -18,6 +22,8 @@ class UnitOfWork:
         self.internaciones = InternacionRepository(session)
         self.servicios_ambulatorios = ServicioAmbulatorioRepository(session)
         self.ocupaciones = OcupacionPacienteRepository(session)
+        self.accesos_internacion = AccesoInternacionRepository(session)
+        self.accesos_ambulatorio = AccesoAmbulatorioRepository(session)
 
     def __enter__(self):
         return self

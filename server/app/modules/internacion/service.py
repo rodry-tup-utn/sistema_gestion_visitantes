@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlmodel import Session, select, or_, func
+from sqlmodel import Session, select, or_, func, col
 from app.core.unit_of_work import UnitOfWork
 from app.modules.internacion.schemas import (
     ServicioInternacionCreate,
@@ -8,6 +8,7 @@ from app.modules.internacion.schemas import (
     ServicioInternacionPaginatedRead,
     InternacionCreate,
     InternacionUpdate,
+    InternacionEstadoUpdate,
     InternacionResponse,
     InternacionPaginatedRead,
     InternacionFiltro,
@@ -25,6 +26,7 @@ from app.modules.internacion.models import (
     Internacion,
     OcupacionPaciente,
 )
+from app.modules.visit.models import AccesoInternacion, EstadoAcceso
 from datetime import datetime, timezone
 
 
@@ -97,22 +99,32 @@ class InternacionService:
             count_stmt = select(func.count()).select_from(Internacion)
 
             if filtro.estado_disponibilidad is not None:
-                stmt = stmt.where(Internacion.estado_disponibilidad == filtro.estado_disponibilidad)
-                count_stmt = count_stmt.where(Internacion.estado_disponibilidad == filtro.estado_disponibilidad)
+                stmt = stmt.where(
+                    Internacion.estado_disponibilidad == filtro.estado_disponibilidad
+                )
+                count_stmt = count_stmt.where(
+                    Internacion.estado_disponibilidad == filtro.estado_disponibilidad
+                )
             if filtro.servicio_id is not None:
-                stmt = stmt.where(Internacion.servicio_internacion_id == filtro.servicio_id)
-                count_stmt = count_stmt.where(Internacion.servicio_internacion_id == filtro.servicio_id)
+                stmt = stmt.where(
+                    Internacion.servicio_internacion_id == filtro.servicio_id
+                )
+                count_stmt = count_stmt.where(
+                    Internacion.servicio_internacion_id == filtro.servicio_id
+                )
             if filtro.query:
                 like = f"%{filtro.query}%"
                 expr = or_(
-                    Internacion.sala.ilike(like),
-                    Internacion.cama.ilike(like),
-                    Internacion.servicio_nombre_cache.ilike(like),
+                    col(Internacion.sala).ilike(like),
+                    col(Internacion.cama).ilike(like),
+                    col(Internacion.servicio_nombre_cache).ilike(like),
                 )
                 stmt = stmt.where(expr)
                 count_stmt = count_stmt.where(expr)
 
-            items = uow.internaciones.session.exec(stmt.offset(filtro.offset).limit(filtro.limit)).all()
+            items = uow.internaciones.session.exec(
+                stmt.offset(filtro.offset).limit(filtro.limit)
+            ).all()
             total = uow.internaciones.session.exec(count_stmt).one()
             data = [InternacionResponse.model_validate(i) for i in items]
         return InternacionPaginatedRead(data=data, total=total)
@@ -135,6 +147,33 @@ class InternacionService:
                 entity.servicio_nombre_cache = servicio.nombre_servicio
             for field, value in update_data.items():
                 setattr(entity, field, value)
+            entity.updated_at = datetime.now(timezone.utc)
+            uow.internaciones.add(entity)
+            result = InternacionResponse.model_validate(entity)
+        return result
+
+    def update_estado(
+        self, entity_id: int, data: InternacionEstadoUpdate
+    ) -> InternacionResponse:
+        with UnitOfWork(self._session) as uow:
+            entity = uow.internaciones.get_by_id(entity_id)
+            if not entity:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, "Cama no encontrada")
+
+            if entity.estado_disponibilidad == EstadoDisponibilidad.OCUPADA:
+                ocupacion_activa = uow.ocupaciones.session.exec(
+                    select(OcupacionPaciente).where(
+                        OcupacionPaciente.internacion_id == entity_id,
+                        OcupacionPaciente.estado == EstadoPaciente.INTERNADO,
+                    )
+                ).first()
+                if ocupacion_activa:
+                    raise HTTPException(
+                        status.HTTP_400_BAD_REQUEST,
+                        "No se puede cambiar el estado: la cama tiene un paciente internado. Debe darle el alta primero.",
+                    )
+
+            entity.estado_disponibilidad = data.estado_disponibilidad
             entity.updated_at = datetime.now(timezone.utc)
             uow.internaciones.add(entity)
             result = InternacionResponse.model_validate(entity)
@@ -232,6 +271,19 @@ class OcupacionPacienteService:
             result = OcupacionPacienteResponse.model_validate(entity)
         return result
 
+    def _finalizar_accesos_ocupacion(self, uow: UnitOfWork, ocupacion_id: int) -> None:
+        ahora = datetime.now(timezone.utc)
+        accesos = uow.accesos_internacion.session.exec(
+            select(AccesoInternacion).where(
+                AccesoInternacion.ocupacion_paciente_id == ocupacion_id,
+                AccesoInternacion.estado == EstadoAcceso.ACTIVO,
+            )
+        ).all()
+        for a in accesos:
+            a.estado = EstadoAcceso.FINALIZADO
+            a.fecha_salida = ahora
+            uow.accesos_internacion.add(a)
+
     def discharge(self, entity_id: int) -> OcupacionPacienteResponse:
         with UnitOfWork(self._session) as uow:
             entity = uow.ocupaciones.get_by_id(entity_id)
@@ -243,6 +295,8 @@ class OcupacionPacienteService:
                 raise HTTPException(
                     status.HTTP_400_BAD_REQUEST, "La ocupación ya fue finalizada"
                 )
+
+            self._finalizar_accesos_ocupacion(uow, entity_id)
 
             entity.estado = EstadoPaciente.ALTA
             entity.fecha_alta = datetime.now(timezone.utc)
@@ -267,6 +321,8 @@ class OcupacionPacienteService:
                 raise HTTPException(
                     status.HTTP_400_BAD_REQUEST, "La ocupación ya fue finalizada"
                 )
+
+            self._finalizar_accesos_ocupacion(uow, entity_id)
 
             entity.estado = EstadoPaciente.FALLECIDO
             entity.fecha_alta = datetime.now(timezone.utc)

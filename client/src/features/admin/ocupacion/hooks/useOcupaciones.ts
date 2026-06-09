@@ -23,7 +23,7 @@ export function useAdmitir() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: AdmitirPayload) => svc.admitirPaciente(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY, "camas"] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["camas"] }); qc.invalidateQueries({ queryKey: KEY }); },
   });
 }
 

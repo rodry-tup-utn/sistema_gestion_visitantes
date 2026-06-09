@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "../../../auth/context/AuthContext";
 import { useServicios, useSearchServicios, useCreateServicio, useUpdateServicio } from "../hooks/useServiciosInternacion";
 import ServicioForm from "../components/ServicioForm";
 import type { CreateServicioInternacionPayload, ServicioInternacion } from "../../../../shared/types/internacion";
@@ -12,6 +13,8 @@ import SearchInput from "../../../../shared/components/SearchInput";
 import EditButton from "../../../../shared/components/EditButton";
 
 export default function ServiciosList() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -40,7 +43,7 @@ export default function ServiciosList() {
 
   return (
     <>
-      <PageHeader title="Servicios de Internación" actionLabel="Nuevo" onAction={() => setShowForm(true)} />
+      <PageHeader title="Servicios de Internación" actionLabel={isAdmin ? "Nuevo" : undefined} onAction={isAdmin ? () => setShowForm(true) : undefined} />
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="mb-4">
           <SearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre..." />
@@ -59,7 +62,7 @@ export default function ServiciosList() {
                       <p className="font-medium text-gray-900">{s.nombre_servicio}</p>
                       {s.bloque_piso && <p className="text-sm text-muted">{s.bloque_piso}</p>}
                     </div>
-                    <EditButton onClick={() => setEditingServicio(s)} />
+                    {isAdmin && <EditButton onClick={() => setEditingServicio(s)} />}
                   </div>
                 </Card>
               ))}
@@ -68,13 +71,15 @@ export default function ServiciosList() {
           </>
         )}
       </div>
-      <ServicioForm
-        key={editingServicio?.id ?? 'create'}
-        isOpen={showForm || !!editingServicio}
-        onClose={() => { setShowForm(false); setEditingServicio(null); }}
-        onSubmit={editingServicio ? handleUpdate : handleCreate}
-        initialData={editingServicio ?? undefined}
-      />
+      {isAdmin && (
+        <ServicioForm
+          key={editingServicio?.id ?? 'create'}
+          isOpen={showForm || !!editingServicio}
+          onClose={() => { setShowForm(false); setEditingServicio(null); }}
+          onSubmit={editingServicio ? handleUpdate : handleCreate}
+          initialData={editingServicio ?? undefined}
+        />
+      )}
     </>
   );
 }

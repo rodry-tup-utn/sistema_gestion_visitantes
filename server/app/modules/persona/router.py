@@ -14,7 +14,7 @@ def get_service(session: Session = Depends(get_session)):
 admin_router = APIRouter(
     prefix="/admin/persona",
     tags=["Personas"],
-    dependencies=[Depends(require_role(["ADMIN"]))],
+    dependencies=[Depends(require_role(["ADMIN", "OPERATOR"]))],
 )
 
 

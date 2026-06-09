@@ -56,6 +56,10 @@ class InternacionUpdate(SQLModel):
     estado_disponibilidad: EstadoDisponibilidad | None = None
 
 
+class InternacionEstadoUpdate(SQLModel):
+    estado_disponibilidad: EstadoDisponibilidad
+
+
 class InternacionResponse(SQLModel):
     id: int
     servicio_internacion_id: int

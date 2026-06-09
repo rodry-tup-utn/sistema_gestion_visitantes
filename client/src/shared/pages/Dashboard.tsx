@@ -1,5 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { Users, ClipboardList, Building, Bed, Hospital, Stethoscope, QrCode, BarChart3 } from "lucide-react";
+import {
+  Users,
+  ClipboardList,
+  Building,
+  Bed,
+  Hospital,
+  Stethoscope,
+  DoorOpen,
+  BarChart3,
+} from "lucide-react";
 import { useAuth } from "../../features/auth/context/AuthContext";
 
 interface NavCardProps {
@@ -38,22 +47,51 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3">
         {user?.role === "ADMIN" && (
           <>
-            <NavCard icon={<Users size={22} />} label="Usuarios" onClick={() => navigate("/admin/users")} />
-            <NavCard icon={<ClipboardList size={22} />} label="Personas" onClick={() => navigate("/admin/personas")} />
-            <NavCard icon={<Building size={22} />} label="Serv. Internación" onClick={() => navigate("/admin/servicios-internacion")} />
-            <NavCard icon={<Bed size={22} />} label="Camas" onClick={() => navigate("/admin/internacion")} />
-            <NavCard icon={<Hospital size={22} />} label="Serv. Ambulatorios" onClick={() => navigate("/admin/servicios-ambulatorios")} />
-            <NavCard icon={<Stethoscope size={22} />} label="Ocupación" onClick={() => navigate("/admin/ocupacion")} />
+            <NavCard
+              icon={<Users size={22} />}
+              label="Usuarios"
+              onClick={() => navigate("/admin/users")}
+            />
+            <NavCard
+              icon={<Building size={22} />}
+              label="Serv. Internación"
+              onClick={() => navigate("/admin/servicios-internacion")}
+            />
+            <NavCard
+              icon={<Bed size={22} />}
+              label="Camas"
+              onClick={() => navigate("/admin/internacion")}
+            />
+            <NavCard
+              icon={<Hospital size={22} />}
+              label="Serv. Ambulatorios"
+              onClick={() => navigate("/admin/servicios-ambulatorios")}
+            />
           </>
         )}
 
-        <button
-          disabled
-          className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-card p-5 text-muted"
-        >
-          <QrCode size={22} />
-          <span className="text-sm">Escanear DNI</span>
-        </button>
+        {(user?.role === "ADMIN" || user?.role === "OPERATOR") && (
+          <>
+            <NavCard
+              icon={<ClipboardList size={22} />}
+              label="Personas"
+              onClick={() => navigate("/admin/personas")}
+            />
+
+            <NavCard
+              icon={<Stethoscope size={22} />}
+              label="Ocupación"
+              onClick={() => navigate("/admin/ocupacion")}
+            />
+          </>
+        )}
+
+        <NavCard
+          icon={<DoorOpen size={22} />}
+          label="Portería"
+          onClick={() => navigate("/porteria")}
+        />
+
         <button
           disabled
           className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-card p-5 text-muted"

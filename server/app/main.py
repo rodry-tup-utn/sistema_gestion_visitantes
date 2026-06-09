@@ -9,6 +9,7 @@ from app.modules.internacion.router import (
     servicio_ambulatorio_router,
     ocupacion_router,
 )
+from app.modules.visit.router import router as visit_router
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -29,6 +30,7 @@ app.include_router(servicio_internacion_router)
 app.include_router(internacion_router)
 app.include_router(servicio_ambulatorio_router)
 app.include_router(ocupacion_router)
+app.include_router(visit_router)
 
 origins = [
     "http://localhost:5173",

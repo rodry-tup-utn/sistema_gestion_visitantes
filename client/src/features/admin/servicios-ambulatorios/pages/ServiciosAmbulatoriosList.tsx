@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "../../../auth/context/AuthContext";
 import { useServicios, useSearchServicios, useCreateServicio, useUpdateServicio } from "../hooks/useServiciosAmbulatorios";
 import ServicioAmbulatorioForm from "../components/ServicioAmbulatorioForm";
 import type { CreateServicioAmbulatorioPayload, ServicioAmbulatorio } from "../../../../shared/types/internacion";
@@ -18,6 +19,8 @@ const estadoVariants: Record<string, "success" | "danger"> = {
 };
 
 export default function ServiciosAmbulatoriosList() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -46,7 +49,7 @@ export default function ServiciosAmbulatoriosList() {
 
   return (
     <>
-      <PageHeader title="Servicios Ambulatorios" actionLabel="Nuevo" onAction={() => setShowForm(true)} />
+      <PageHeader title="Servicios Ambulatorios" actionLabel={isAdmin ? "Nuevo" : undefined} onAction={isAdmin ? () => setShowForm(true) : undefined} />
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="mb-4">
           <SearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre o ubicación..." />
@@ -67,7 +70,7 @@ export default function ServiciosAmbulatoriosList() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge variant={estadoVariants[s.estado] ?? "default"}>{s.estado}</Badge>
-                      <EditButton onClick={() => setEditingServicio(s)} />
+                      {isAdmin && <EditButton onClick={() => setEditingServicio(s)} />}
                     </div>
                   </div>
                 </Card>
@@ -77,13 +80,15 @@ export default function ServiciosAmbulatoriosList() {
           </>
         )}
       </div>
-      <ServicioAmbulatorioForm
-        key={editingServicio?.id ?? 'create'}
-        isOpen={showForm || !!editingServicio}
-        onClose={() => { setShowForm(false); setEditingServicio(null); }}
-        onSubmit={editingServicio ? handleUpdate : handleCreate}
-        initialData={editingServicio ?? undefined}
-      />
+      {isAdmin && (
+        <ServicioAmbulatorioForm
+          key={editingServicio?.id ?? 'create'}
+          isOpen={showForm || !!editingServicio}
+          onClose={() => { setShowForm(false); setEditingServicio(null); }}
+          onSubmit={editingServicio ? handleUpdate : handleCreate}
+          initialData={editingServicio ?? undefined}
+        />
+      )}
     </>
   );
 }
