@@ -11,6 +11,14 @@ export function useUsers(offset = 0, limit = 20) {
   });
 }
 
+export function useSearchUsers(query: string, offset = 0, limit = 20) {
+  return useQuery({
+    queryKey: [...USERS_KEY, "search", { query, offset, limit }],
+    queryFn: () => usersService.searchUsers(query, offset, limit),
+    enabled: query.length >= 2,
+  });
+}
+
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({

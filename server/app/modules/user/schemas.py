@@ -2,6 +2,7 @@ from sqlmodel import SQLModel, Field
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
 from app.modules.user.models import Role
+from pydantic import Field as PydanticField
 
 
 class UserCreate(SQLModel):
@@ -57,3 +58,9 @@ class UserPaginatedRead(SQLModel):
 class UpdatePass(BaseModel):
     old_pass: str
     new_pass: str = Field(max_length=255, min_length=8)
+
+
+class UserFiltro(SQLModel):
+    query: str | None = PydanticField(default=None, max_length=50)
+    offset: int = PydanticField(default=0, ge=0)
+    limit: int = PydanticField(default=20, ge=1, le=100)

@@ -1,11 +1,23 @@
 from sqlmodel import Session
 from app.modules.user.repository import UserRepository
+from app.modules.persona.repository import PersonaRepository
+from app.modules.internacion.repository import (
+    ServicioInternacionRepository,
+    InternacionRepository,
+    ServicioAmbulatorioRepository,
+    OcupacionPacienteRepository,
+)
 
 
 class UnitOfWork:
     def __init__(self, session: Session):
         self._session = session
         self.users = UserRepository(session)
+        self.personas = PersonaRepository(session)
+        self.servicios_internacion = ServicioInternacionRepository(session)
+        self.internaciones = InternacionRepository(session)
+        self.servicios_ambulatorios = ServicioAmbulatorioRepository(session)
+        self.ocupaciones = OcupacionPacienteRepository(session)
 
     def __enter__(self):
         return self

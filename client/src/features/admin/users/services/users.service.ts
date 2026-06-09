@@ -6,6 +6,11 @@ export async function getUsers(offset = 0, limit = 20): Promise<UserPaginated> {
   return res.data;
 }
 
+export async function searchUsers(query: string, offset = 0, limit = 20): Promise<UserPaginated> {
+  const res = await api.get<UserPaginated>("/admin/user", { params: { query, offset, limit } });
+  return res.data;
+}
+
 export async function createUser(data: CreateUserPayload): Promise<User> {
   const res = await api.post<User>("/admin/user", data);
   return res.data;

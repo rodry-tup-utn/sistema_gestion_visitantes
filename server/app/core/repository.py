@@ -27,9 +27,14 @@ class BaseRepository(Generic[ModelT]):
     def add(self, instance: ModelT) -> ModelT:
 
         self.session.add(instance)
-        self.session.flush()  # obtiene el ID sin hacer commit
+        self.session.flush()
         self.session.refresh(instance)
         return instance
+
+    def add_from_schema(self, schema: SQLModel, exclude: set[str] | None = None) -> ModelT:
+        data = schema.model_dump(exclude=exclude or set())
+        instance = self.model(**data)
+        return self.add(instance)
 
     def delete(self, instance: ModelT) -> None:
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Path, status
+from fastapi import APIRouter, Depends, Path, status
 from sqlmodel import Session
 from app.modules.user.service import UserService
 from app.modules.user.schemas import (
@@ -10,6 +10,7 @@ from app.modules.user.schemas import (
     UserPaginatedRead,
     TokenPayloadData,
     UpdatePass,
+    UserFiltro,
 )
 from typing import Annotated
 from app.core.database import get_session
@@ -87,28 +88,12 @@ def create_user(
 
 @admin_router.get("/", response_model=UserPaginatedRead)
 def get_all_users(
-    offset: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1)] = 20,
+    filtro: UserFiltro = Depends(),
     svc: UserService = Depends(get_user_service),
 ):
-    return svc.get_all(offset, limit)
-
-
-@admin_router.get("/search", response_model=UserPaginatedRead)
-def search(
-    query: Annotated[
-        str,
-        Query(
-            min_length=2,
-            max_length=50,
-            description="Se necesitan al menos 2 caracteres para hacer una busqueda",
-        ),
-    ],
-    offset: int = 0,
-    limit: int = 20,
-    svc: UserService = Depends(get_user_service),
-):
-    return svc.search(query, offset, limit)
+    if filtro.query:
+        return svc.search(filtro.query, filtro.offset, filtro.limit)
+    return svc.get_all(filtro.offset, filtro.limit)
 
 
 @admin_router.get("/{id}", response_model=UserResponse)

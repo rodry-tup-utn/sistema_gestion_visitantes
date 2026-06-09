@@ -83,14 +83,22 @@ El esquema de la base de datos relacional se estructura de forma limpia, separan
 - `dni` (Indexado / Único)
 - `nombre`
 - `apellido`
+- `fecha_nacimiento` (Fecha de nacimiento)
+- `telefono` (Teléfono de contacto)
+- `created_at` / `updated_at`
 
 ### C. Módulo de Infraestructura e Internación (`internacion`)
 
-- **`Internacion`:** Catálogo físico fijo de las plazas y camas del hospital.
+- **`ServicioInternacion`:** Catálogo fijo de servicios médicos que poseen camas de internación.
 - `id` (PK)
-- `servicio` (Ej: "Clínica Médica", "Maternidad")
+- `nombre_servicio` (Ej: "Clínica Médica", "Maternidad")
+- `bloque_piso` (Ej: "Piso 1", "Piso 2")
+
+- **`Internacion`:** Catálogo físico fijo de camas del hospital, asociadas a un servicio.
+- `id` (PK)
+- `servicio_internacion_id` (FK a `ServicioInternacion`)
 - `sala` / `cama`
-- `estado_disponibilidad` (Disponible, Ocupada, Mantenimiento)
+- `estado_disponibilidad` (Disponible, Ocupada, Mantenimiento, No Disponible)
 
 - **`ServicioAmbulatorio`:** Representa los lugares físicos de atención externa que no son camas de internación.
 - `id` (PK)

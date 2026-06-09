@@ -1,28 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  useUsers,
-  useCreateUser,
-  useUpdateRole,
-  useDeactivateUser,
-  useReactivateUser,
-} from "../hooks/useUsers";
+import { useUsers, useSearchUsers, useCreateUser, useUpdateRole, useDeactivateUser, useReactivateUser } from "../hooks/useUsers";
 import UserForm from "../components/UserForm";
-import type {
-  CreateUserPayload,
-  UpdateRolePayload,
-} from "../../../../shared/types/user";
+import type { CreateUserPayload, UpdateRolePayload } from "../../../../shared/types/user";
+import PageHeader from "../../../../shared/components/PageHeader";
+import Spinner from "../../../../shared/components/Spinner";
+import Card from "../../../../shared/components/Card";
+import Badge from "../../../../shared/components/Badge";
+import EmptyState from "../../../../shared/components/EmptyState";
+import Pagination from "../../../../shared/components/Pagination";
+import SearchInput from "../../../../shared/components/SearchInput";
 
 export default function UsersList() {
   const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
   const limit = 20;
 
   const { data, isLoading, isError, error } = useUsers(page * limit, limit);
+  const { data: searchData, isLoading: searchLoading } = useSearchUsers(search, page * limit, limit);
   const createMutation = useCreateUser();
   const updateRoleMutation = useUpdateRole();
   const deactivateMutation = useDeactivateUser();
   const reactivateMutation = useReactivateUser();
   const [showForm, setShowForm] = useState(false);
+  const isSearching = search.length >= 2;
+  const list = isSearching ? searchData : data;
+
+  useEffect(() => { setPage(0); }, [search]);
 
   async function handleCreate(data: CreateUserPayload) {
     await createMutation.mutateAsync(data);
@@ -31,24 +35,15 @@ export default function UsersList() {
   }
 
   async function handleRoleChange(userId: number, currentRole: string) {
-    const newRole: UpdateRolePayload["role"] =
-      currentRole === "ADMIN" ? "OPERATOR" : "ADMIN";
+    const newRole: UpdateRolePayload["role"] = currentRole === "ADMIN" ? "OPERATOR" : "ADMIN";
     await updateRoleMutation.mutateAsync({ userId, data: { role: newRole } });
     toast.success("Rol actualizado");
   }
 
   async function handleDeactivate(userId: number) {
-    toast("¿Desactivar este usuario? No podrá iniciar sesión.", {
-      duration: Infinity,
-      action: {
-        label: "Confirmar",
-        onClick: async () => await deactivateMutation.mutateAsync(userId),
-      },
-      cancel: {
-        label: "Cancel",
-        onClick: () => toast.info("Accion cancelada"),
-      },
-    });
+    if (!window.confirm("¿Desactivar este usuario? No podrá iniciar sesión.")) return;
+    await deactivateMutation.mutateAsync(userId);
+    toast.success("Usuario desactivado");
   }
 
   async function handleReactivate(userId: number) {
@@ -58,78 +53,39 @@ export default function UsersList() {
 
   return (
     <>
-      <div className="flex items-center justify-around mt-2 px-4 py-3">
-        <h1 className="text-lg font-bold text-gray-900">Usuarios</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow transition hover:bg-blue-700"
-        >
-          + Nuevo
-        </button>
-      </div>
-
+      <PageHeader title="Usuarios" actionLabel="Nuevo" onAction={() => setShowForm(true)} />
       <div className="mx-auto max-w-4xl px-4 py-6">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          </div>
+        <div className="mb-4">
+          <SearchInput value={search} onChange={setSearch} placeholder="Buscar por nombre, apellido o email..." />
+        </div>
+        {isLoading || searchLoading ? (
+          <Spinner />
         ) : isError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
             <p className="text-sm text-red-700">
-              {error instanceof Error
-                ? error.message
-                : "Error al cargar usuarios"}
+              {error instanceof Error ? error.message : "Error al cargar usuarios"}
             </p>
-            <button
-              onClick={() => setPage(0)}
-              className="mt-3 rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200"
-            >
-              Reintentar
-            </button>
+            <button onClick={() => setPage(0)} className="mt-3 rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200">Reintentar</button>
           </div>
-        ) : data && data.data.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-12 text-center">
-            <p className="text-gray-500">No hay usuarios registrados</p>
-            <button
-              onClick={() => setShowForm(true)}
-              className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-            >
-              Crear primer usuario
-            </button>
-          </div>
+        ) : list && list.data.length === 0 ? (
+          <EmptyState label="usuarios" actionLabel="Crear primer usuario" onAction={() => setShowForm(true)} />
         ) : (
           <>
             <div className="space-y-3">
-              {data?.data.map((u) => (
-                <div key={u.id} className="rounded-xl bg-white p-4 shadow-sm">
+              {list?.data.map((u) => (
+                <Card key={u.id}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900 truncate">
-                        {u.name} {u.lastname}
-                      </p>
-                      <p className="text-sm text-gray-500 truncate">
-                        {u.email}
-                      </p>
+                      <p className="font-medium text-gray-900 truncate">{u.name} {u.lastname}</p>
+                      <p className="text-sm text-gray-500 truncate">{u.email}</p>
                     </div>
                     <div className="flex shrink-0 gap-1.5">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          u.role === "ADMIN"
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-blue-100 text-blue-700"
-                        }`}
-                      >
+                      <Badge variant={u.role === "ADMIN" ? "purple" : "primary"}>
                         {u.role === "ADMIN" ? "Admin" : "Operador"}
-                      </span>
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          u.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
+                      </Badge>
+                      <Badge variant={u.is_active ? "success" : "danger"}>
                         {u.is_active ? "Activo" : "Inactivo"}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -158,38 +114,14 @@ export default function UsersList() {
                       </button>
                     )}
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
-
-            {data && data.total > limit && (
-              <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-                <button
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page === 0}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition hover:bg-gray-50 disabled:opacity-40"
-                >
-                  Anterior
-                </button>
-                <span>
-                  Página {page + 1} · {data.total} usuarios
-                </span>
-                <button
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={(page + 1) * limit >= data.total}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition hover:bg-gray-50 disabled:opacity-40"
-                >
-                  Siguiente
-                </button>
-              </div>
-            )}
+            <Pagination page={page} total={list?.total ?? 0} limit={limit} onPageChange={setPage} label="usuarios" />
           </>
         )}
       </div>
-
-      {showForm && (
-        <UserForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />
-      )}
+      {showForm && <UserForm onSubmit={handleCreate} onCancel={() => setShowForm(false)} />}
     </>
   );
 }
