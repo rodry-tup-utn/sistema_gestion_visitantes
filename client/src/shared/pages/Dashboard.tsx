@@ -23,7 +23,7 @@ function NavCard({ icon, label, onClick }: NavCardProps) {
       onClick={onClick}
       className="flex flex-col items-center gap-2 rounded-xl bg-card p-5 shadow-sm transition hover:shadow-md active:scale-[0.97] cursor-pointer"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-light text-primary">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
         {icon}
       </div>
       <span className="text-sm font-medium text-gray-700">{label}</span>

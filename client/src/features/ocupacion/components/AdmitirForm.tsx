@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
-import Modal from "../../../../shared/components/Modal";
-import Spinner from "../../../../shared/components/Spinner";
-
-import type { Cama } from "../../../../shared/types/internacion";
-import type { Persona } from "../../../../shared/types/persona";
 import {
   usePersonas,
   useSearchPersonas,
-} from "../../../personas/hooks/usePersonas";
-import { getCamas } from "../../../camas/services/camas.service";
+} from "../../personas/hooks/usePersonas";
+import { getCamas } from "../../camas/services/camas.service";
+import type { Cama } from "../../../shared/types/internacion";
+import type { Persona } from "../../../shared/types/persona";
+import Modal from "../../../shared/components/Modal";
+import Spinner from "../../../shared/components/Spinner";
 
 interface AdmitirFormProps {
   isOpen: boolean;

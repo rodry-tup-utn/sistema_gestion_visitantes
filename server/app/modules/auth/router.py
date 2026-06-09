@@ -22,10 +22,10 @@ def login_for_access_token(
     response.set_cookie(
         key="access_token",
         value=token,
-        httponly=True,
+        httponly=False,
         max_age=1800,
-        samesite="lax",
-        secure=False,
+        samesite="none",
+        secure=True,
     )
     return {"message": "Login exitoso. Sesión iniciada"}
 

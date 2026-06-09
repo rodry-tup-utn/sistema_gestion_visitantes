@@ -8,14 +8,24 @@ import type {
 const KEY_INTERNACION = ["accesos-internacion"];
 const KEY_AMBULATORIO = ["accesos-ambulatorio"];
 
-export function useAccesosInternacion(offset = 0, limit = 20, activos = true, persona_id?: number) {
+export function useAccesosInternacion(
+  offset = 0,
+  limit = 20,
+  activos = true,
+  persona_id?: number,
+) {
   return useQuery({
     queryKey: [...KEY_INTERNACION, { offset, limit, activos, persona_id }],
-    queryFn: () => svc.getAccesosInternacion(offset, limit, activos, persona_id),
+    queryFn: () =>
+      svc.getAccesosInternacion(offset, limit, activos, persona_id),
   });
 }
 
-export function useSearchAccesosInternacion(query: string, offset = 0, limit = 20) {
+export function useSearchAccesosInternacion(
+  query: string,
+  offset = 0,
+  limit = 20,
+) {
   return useQuery({
     queryKey: [...KEY_INTERNACION, "search", { query, offset, limit }],
     queryFn: () => svc.searchAccesosInternacion(query, offset, limit),
@@ -26,9 +36,11 @@ export function useSearchAccesosInternacion(query: string, offset = 0, limit = 2
 export function useCrearAccesoInternacion() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateAccesoInternacionPayload) => svc.crearAccesoInternacion(data),
+    mutationFn: (data: CreateAccesoInternacionPayload) =>
+      svc.crearAccesoInternacion(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY_INTERNACION });
+      qc.invalidateQueries({ queryKey: KEY_ACTIVOS });
     },
   });
 }
@@ -39,18 +51,30 @@ export function useFinalizarAccesoInternacion() {
     mutationFn: (id: number) => svc.finalizarAccesoInternacion(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY_INTERNACION });
+      qc.invalidateQueries({ queryKey: KEY_ACTIVOS });
+      qc.invalidateQueries({ queryKey: KEY_VENCIDOS });
     },
   });
 }
 
-export function useAccesosAmbulatorio(offset = 0, limit = 20, activos = true, persona_id?: number) {
+export function useAccesosAmbulatorio(
+  offset = 0,
+  limit = 20,
+  activos = true,
+  persona_id?: number,
+) {
   return useQuery({
     queryKey: [...KEY_AMBULATORIO, { offset, limit, activos, persona_id }],
-    queryFn: () => svc.getAccesosAmbulatorio(offset, limit, activos, persona_id),
+    queryFn: () =>
+      svc.getAccesosAmbulatorio(offset, limit, activos, persona_id),
   });
 }
 
-export function useSearchAccesosAmbulatorio(query: string, offset = 0, limit = 20) {
+export function useSearchAccesosAmbulatorio(
+  query: string,
+  offset = 0,
+  limit = 20,
+) {
   return useQuery({
     queryKey: [...KEY_AMBULATORIO, "search", { query, offset, limit }],
     queryFn: () => svc.searchAccesosAmbulatorio(query, offset, limit),
@@ -61,9 +85,11 @@ export function useSearchAccesosAmbulatorio(query: string, offset = 0, limit = 2
 export function useCrearAccesoAmbulatorio() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateAccesoAmbulatorioPayload) => svc.crearAccesoAmbulatorio(data),
+    mutationFn: (data: CreateAccesoAmbulatorioPayload) =>
+      svc.crearAccesoAmbulatorio(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY_AMBULATORIO });
+      qc.invalidateQueries({ queryKey: KEY_ACTIVOS });
     },
   });
 }
@@ -74,6 +100,8 @@ export function useFinalizarAccesoAmbulatorio() {
     mutationFn: (id: number) => svc.finalizarAccesoAmbulatorio(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY_AMBULATORIO });
+      qc.invalidateQueries({ queryKey: KEY_ACTIVOS });
+      qc.invalidateQueries({ queryKey: KEY_VENCIDOS });
     },
   });
 }
@@ -93,6 +121,7 @@ export function useRenovarAccesoInternacion() {
   return useMutation({
     mutationFn: (id: number) => svc.renovarAccesoInternacion(id),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY_ACTIVOS });
       qc.invalidateQueries({ queryKey: KEY_VENCIDOS });
       qc.invalidateQueries({ queryKey: KEY_INTERNACION });
     },
@@ -120,6 +149,7 @@ export function useRenovarAccesoAmbulatorio() {
   return useMutation({
     mutationFn: (id: number) => svc.renovarAccesoAmbulatorio(id),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY_ACTIVOS });
       qc.invalidateQueries({ queryKey: KEY_VENCIDOS });
       qc.invalidateQueries({ queryKey: KEY_AMBULATORIO });
     },

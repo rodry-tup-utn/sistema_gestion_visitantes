@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrearAccesoInternacion } from "../hooks/useAccesos";
-import { useOcupaciones } from "../../admin/ocupacion/hooks/useOcupaciones";
-import { useSearchPersonas } from "../../admin/personas/hooks/usePersonas";
 import Button from "../../../shared/components/Button";
 import Card from "../../../shared/components/Card";
 import Spinner from "../../../shared/components/Spinner";
+import { useNavigate } from "react-router-dom";
+import { useSearchPersonas } from "../../personas/hooks/usePersonas";
+import { useOcupaciones } from "../../ocupacion/hooks/useOcupaciones";
 
 export default function IngresoInternacion() {
   const [dni, setDni] = useState("");
@@ -13,12 +14,15 @@ export default function IngresoInternacion() {
   const [apellido, setApellido] = useState("");
   const [personaEncontrada, setPersonaEncontrada] = useState(false);
   const [buscandoPersona, setBuscandoPersona] = useState(false);
-  const [selectedOcupacionId, setSelectedOcupacionId] = useState<number | null>(null);
+  const [selectedOcupacionId, setSelectedOcupacionId] = useState<number | null>(
+    null,
+  );
   const [tipoAcceso, setTipoAcceso] = useState("Visita Estandar");
 
   const { data: searchData } = useSearchPersonas(dni, 0, 5);
   const { data: ocupacionesData, isLoading } = useOcupaciones(0, 50, true);
   const crear = useCrearAccesoInternacion();
+  const navigate = useNavigate();
 
   function handleBuscarPersona() {
     if (!dni || dni.length < 6) {
@@ -60,32 +64,49 @@ export default function IngresoInternacion() {
     setApellido("");
     setPersonaEncontrada(false);
     setSelectedOcupacionId(null);
+    navigate("/porteria/visitantes");
   }
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-6 text-lg font-bold text-gray-900">Ingreso - Internación</h1>
+      <h1 className="mb-6 text-lg font-bold text-gray-900">
+        Ingreso - Internación
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Visitante</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            Visitante
+          </h2>
           <div className="space-y-3">
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600">DNI</label>
+                <label className="block text-xs font-medium text-gray-600">
+                  DNI
+                </label>
                 <input
                   value={dni}
-                  onChange={(e) => { setDni(e.target.value); setPersonaEncontrada(false); }}
+                  onChange={(e) => {
+                    setDni(e.target.value);
+                    setPersonaEncontrada(false);
+                  }}
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
-              <Button type="button" variant="secondary" onClick={handleBuscarPersona} loading={buscandoPersona}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleBuscarPersona}
+                loading={buscandoPersona}
+              >
                 Buscar
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600">Nombre</label>
+                <label className="block text-xs font-medium text-gray-600">
+                  Nombre
+                </label>
                 <input
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
@@ -94,7 +115,9 @@ export default function IngresoInternacion() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600">Apellido</label>
+                <label className="block text-xs font-medium text-gray-600">
+                  Apellido
+                </label>
                 <input
                   value={apellido}
                   onChange={(e) => setApellido(e.target.value)}
@@ -107,7 +130,9 @@ export default function IngresoInternacion() {
         </Card>
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Paciente internado</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            Paciente internado
+          </h2>
           {isLoading ? (
             <Spinner />
           ) : !ocupacionesData?.data.length ? (
@@ -127,7 +152,9 @@ export default function IngresoInternacion() {
                     className="accent-blue-600"
                   />
                   <div>
-                    <p className="font-medium text-gray-900">{o.paciente_nombre_cache}</p>
+                    <p className="font-medium text-gray-900">
+                      {o.paciente_nombre_cache}
+                    </p>
                     <p className="text-xs text-muted">{o.ubicacion_cache}</p>
                   </div>
                 </label>
@@ -137,7 +164,9 @@ export default function IngresoInternacion() {
         </Card>
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Tipo de acceso</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            Tipo de acceso
+          </h2>
           <select
             value={tipoAcceso}
             onChange={(e) => setTipoAcceso(e.target.value)}

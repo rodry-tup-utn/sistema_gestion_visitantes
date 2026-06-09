@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCrearAccesoAmbulatorio } from "../hooks/useAccesos";
-import { useServicios } from "../../admin/servicios-ambulatorios/hooks/useServiciosAmbulatorios";
-import { useSearchPersonas } from "../../admin/personas/hooks/usePersonas";
 import Button from "../../../shared/components/Button";
 import Card from "../../../shared/components/Card";
+import { useNavigate } from "react-router-dom";
+import { useSearchPersonas } from "../../personas/hooks/usePersonas";
+import { useServicios } from "../../servicios-internacion/hooks/useServiciosInternacion";
 
 export default function IngresoAmbulatorio() {
   const [dni, setDni] = useState("");
@@ -12,12 +13,15 @@ export default function IngresoAmbulatorio() {
   const [apellido, setApellido] = useState("");
   const [personaEncontrada, setPersonaEncontrada] = useState(false);
   const [buscandoPersona, setBuscandoPersona] = useState(false);
-  const [selectedServicioId, setSelectedServicioId] = useState<number | null>(null);
+  const [selectedServicioId, setSelectedServicioId] = useState<number | null>(
+    null,
+  );
   const [tipoAcceso, setTipoAcceso] = useState("Consulta");
 
   const { data: searchData } = useSearchPersonas(dni, 0, 5);
   const { data: serviciosData } = useServicios();
   const crear = useCrearAccesoAmbulatorio();
+  const navigate = useNavigate();
 
   function handleBuscarPersona() {
     if (!dni || dni.length < 6) {
@@ -59,32 +63,49 @@ export default function IngresoAmbulatorio() {
     setApellido("");
     setPersonaEncontrada(false);
     setSelectedServicioId(null);
+    navigate("/porteria/visitantes");
   }
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-6 text-lg font-bold text-gray-900">Ingreso - Ambulatorio</h1>
+      <h1 className="mb-6 text-lg font-bold text-gray-900">
+        Ingreso - Ambulatorio
+      </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Datos de la persona</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            Datos de la persona
+          </h2>
           <div className="space-y-3">
             <div className="flex items-end gap-2">
               <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600">DNI</label>
+                <label className="block text-xs font-medium text-gray-600">
+                  DNI
+                </label>
                 <input
                   value={dni}
-                  onChange={(e) => { setDni(e.target.value); setPersonaEncontrada(false); }}
+                  onChange={(e) => {
+                    setDni(e.target.value);
+                    setPersonaEncontrada(false);
+                  }}
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
-              <Button type="button" variant="secondary" onClick={handleBuscarPersona} loading={buscandoPersona}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleBuscarPersona}
+                loading={buscandoPersona}
+              >
                 Buscar
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600">Nombre</label>
+                <label className="block text-xs font-medium text-gray-600">
+                  Nombre
+                </label>
                 <input
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
@@ -93,7 +114,9 @@ export default function IngresoAmbulatorio() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600">Apellido</label>
+                <label className="block text-xs font-medium text-gray-600">
+                  Apellido
+                </label>
                 <input
                   value={apellido}
                   onChange={(e) => setApellido(e.target.value)}
@@ -106,21 +129,29 @@ export default function IngresoAmbulatorio() {
         </Card>
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Servicio ambulatorio</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            Servicio ambulatorio
+          </h2>
           <select
             value={selectedServicioId ?? ""}
-            onChange={(e) => setSelectedServicioId(Number(e.target.value) || null)}
+            onChange={(e) =>
+              setSelectedServicioId(Number(e.target.value) || null)
+            }
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="">Seleccionar servicio</option>
             {(serviciosData?.data ?? []).map((s) => (
-              <option key={s.id} value={s.id}>{s.nombre_servicio}</option>
+              <option key={s.id} value={s.id}>
+                {s.nombre_servicio}
+              </option>
             ))}
           </select>
         </Card>
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Tipo de acceso</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">
+            Tipo de acceso
+          </h2>
           <select
             value={tipoAcceso}
             onChange={(e) => setTipoAcceso(e.target.value)}
