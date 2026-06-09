@@ -106,6 +106,10 @@ class ServicioAmbulatorioPaginatedRead(SQLModel):
 
 # ─── OcupacionPaciente ───
 
+class OcupacionCamaUpdate(SQLModel):
+    internacion_id: int = Field(ge=1)
+
+
 class OcupacionPacienteCreate(SQLModel):
     persona_id: int = Field(ge=1)
     internacion_id: int = Field(ge=1)

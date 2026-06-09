@@ -16,6 +16,7 @@ from app.modules.internacion.schemas import (
     ServicioAmbulatorioUpdate,
     ServicioAmbulatorioResponse,
     ServicioAmbulatorioPaginatedRead,
+    OcupacionCamaUpdate,
     OcupacionPacienteCreate,
     OcupacionPacienteResponse,
     OcupacionPacientePaginatedRead,
@@ -336,6 +337,46 @@ class OcupacionPacienteService:
             result = OcupacionPacienteResponse.model_validate(entity)
         return result
 
+    def cambiar_cama(
+        self, entity_id: int, data: OcupacionCamaUpdate
+    ) -> OcupacionPacienteResponse:
+        with UnitOfWork(self._session) as uow:
+            entity = uow.ocupaciones.get_by_id(entity_id)
+            if not entity:
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, "Ocupación no encontrada"
+                )
+            if entity.estado != EstadoPaciente.INTERNADO:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    "Solo se puede cambiar cama de pacientes internados",
+                )
+
+            nueva_cama = uow.internaciones.get_by_id(data.internacion_id)
+            if not nueva_cama:
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, "Cama no encontrada"
+                )
+            if nueva_cama.estado_disponibilidad != EstadoDisponibilidad.DISPONIBLE:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "La cama no está disponible"
+                )
+
+            vieja_cama = uow.internaciones.get_by_id(entity.internacion_id)
+            if vieja_cama:
+                vieja_cama.estado_disponibilidad = EstadoDisponibilidad.DISPONIBLE
+                uow.internaciones.add(vieja_cama)
+
+            nueva_cama.estado_disponibilidad = EstadoDisponibilidad.OCUPADA
+            uow.internaciones.add(nueva_cama)
+
+            entity.internacion_id = data.internacion_id
+            entity.ubicacion_cache = f"{nueva_cama.servicio_nombre_cache} - Sala {nueva_cama.sala} - Cama {nueva_cama.cama}"
+            uow.ocupaciones.add(entity)
+
+            result = OcupacionPacienteResponse.model_validate(entity)
+        return result
+
     def get_all(
         self, offset: int = 0, limit: int = 20
     ) -> OcupacionPacientePaginatedRead:
@@ -367,30 +408,26 @@ class OcupacionPacienteService:
         return OcupacionPacientePaginatedRead(data=data, total=total)
 
     def search(
-        self, query: str, offset: int = 0, limit: int = 20
+        self, query: str, offset: int = 0, limit: int = 20, solo_activos: bool = False
     ) -> OcupacionPacientePaginatedRead:
         like = f"%{query}%"
+        filters = or_(
+            col(OcupacionPaciente.paciente_nombre_cache).ilike(like),
+            col(OcupacionPaciente.ubicacion_cache).ilike(like),
+        )
+        if solo_activos:
+            filters = filters & (OcupacionPaciente.estado == EstadoPaciente.INTERNADO)
         with UnitOfWork(self._session) as uow:
             items = uow.ocupaciones.session.exec(
                 select(OcupacionPaciente)
-                .where(
-                    or_(
-                        col(OcupacionPaciente.paciente_nombre_cache).ilike(like),
-                        col(OcupacionPaciente.ubicacion_cache).ilike(like),
-                    )
-                )
+                .where(filters)
                 .order_by(col(OcupacionPaciente.fecha_ingreso).desc())
                 .offset(offset)
                 .limit(limit)
             ).all()
             total = len(
                 uow.ocupaciones.session.exec(
-                    select(OcupacionPaciente.id).where(
-                        or_(
-                            col(OcupacionPaciente.paciente_nombre_cache).ilike(like),
-                            col(OcupacionPaciente.ubicacion_cache).ilike(like),
-                        )
-                    )
+                    select(OcupacionPaciente.id).where(filters)
                 ).all()
             )
             data = [OcupacionPacienteResponse.model_validate(i) for i in items]

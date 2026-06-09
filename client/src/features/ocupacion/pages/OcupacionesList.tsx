@@ -6,8 +6,10 @@ import {
   useAdmitir,
   useDarAlta,
   useRegistrarFallecimiento,
+  useCambiarCama,
 } from "../hooks/useOcupaciones";
 import AdmitirForm from "../components/AdmitirForm";
+import CambiarCamaModal from "../components/CambiarCamaModal";
 import OcupacionCard from "../components/OcupacionCard";
 import type {
   AdmitirPayload,
@@ -33,11 +35,17 @@ export default function OcupacionesList() {
   const admitir = useAdmitir();
   const darAlta = useDarAlta();
   const registrarFallecimiento = useRegistrarFallecimiento();
+  const cambiarCama = useCambiarCama();
   const [showAdmitir, setShowAdmitir] = useState(false);
+  const [showCambiarCama, setShowCambiarCama] = useState(false);
+  const [camaOcupacionId, setCamaOcupacionId] = useState<number | null>(null);
   const isSearching = search.length >= 2;
   const list = isSearching ? searchData : data;
 
-  const isPending = darAlta.isPending || registrarFallecimiento.isPending;
+  const isPending =
+    darAlta.isPending ||
+    registrarFallecimiento.isPending ||
+    cambiarCama.isPending;
 
   useEffect(() => {
     setPage(0);
@@ -56,6 +64,20 @@ export default function OcupacionesList() {
   async function handleFallecimiento(id: number) {
     await registrarFallecimiento.mutateAsync(id);
     toast.success("Fallecimiento registrado");
+  }
+
+  function handleCambiarCamaClick(id: number) {
+    setCamaOcupacionId(id);
+    setShowCambiarCama(true);
+  }
+
+  async function handleCambiarCama(internacion_id: number) {
+    if (!camaOcupacionId) return;
+    await cambiarCama.mutateAsync({
+      id: camaOcupacionId,
+      data: { internacion_id },
+    });
+    toast.success("Cama cambiada");
   }
 
   return (
@@ -109,6 +131,7 @@ export default function OcupacionesList() {
                   ocupacion={o}
                   onAlta={handleAlta}
                   onFallecido={handleFallecimiento}
+                  onCambiarCama={handleCambiarCamaClick}
                   isPending={isPending}
                 />
               ))}
@@ -127,6 +150,19 @@ export default function OcupacionesList() {
         isOpen={showAdmitir}
         onClose={() => setShowAdmitir(false)}
         onSubmit={handleAdmitir}
+      />
+
+      <CambiarCamaModal
+        isOpen={showCambiarCama}
+        onClose={() => {
+          setShowCambiarCama(false);
+          setCamaOcupacionId(null);
+        }}
+        onSubmit={handleCambiarCama}
+        pacienteNombre={
+          list?.data.find((o) => o.id === camaOcupacionId)
+            ?.paciente_nombre_cache ?? ""
+        }
       />
     </>
   );

@@ -1,6 +1,7 @@
 import api from "../../../shared/services/api";
 import type {
   AdmitirPayload,
+  CambiarCamaPayload,
   OcupacionPaciente,
   OcupacionPacientePaginated,
 } from "../../../shared/types/internacion";
@@ -21,10 +22,11 @@ export function searchOcupaciones(
   query: string,
   offset = 0,
   limit = 20,
+  solo_activos = false,
 ): Promise<OcupacionPacientePaginated> {
   return api
     .get("/admin/ocupacion", {
-      params: { query, offset, limit, solo_activos: false },
+      params: { query, offset, limit, solo_activos },
     })
     .then((r) => r.data);
 }
@@ -41,4 +43,11 @@ export function darAlta(id: number): Promise<OcupacionPaciente> {
 
 export function registrarFallecimiento(id: number): Promise<OcupacionPaciente> {
   return api.patch(`/admin/ocupacion/${id}/fallecido`).then((r) => r.data);
+}
+
+export function cambiarCama(
+  id: number,
+  data: CambiarCamaPayload,
+): Promise<OcupacionPaciente> {
+  return api.patch(`/admin/ocupacion/${id}/cambiar-cama`, data).then((r) => r.data);
 }

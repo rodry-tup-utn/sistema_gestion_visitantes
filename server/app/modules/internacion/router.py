@@ -24,6 +24,7 @@ from app.modules.internacion.schemas import (
     ServicioAmbulatorioUpdate,
     ServicioAmbulatorioResponse,
     ServicioAmbulatorioPaginatedRead,
+    OcupacionCamaUpdate,
     OcupacionPacienteCreate,
     OcupacionPacienteResponse,
     OcupacionPacientePaginatedRead,
@@ -178,7 +179,7 @@ def get_all_oc(
     svc: OcupacionPacienteService = Depends(get_oc_service),
 ):
     if query:
-        return svc.search(query, offset, limit)
+        return svc.search(query, offset, limit, solo_activos=solo_activos)
     if solo_activos:
         return svc.get_active(offset, limit)
     return svc.get_all(offset, limit)
@@ -198,3 +199,12 @@ def registrar_fallecimiento(
     svc: OcupacionPacienteService = Depends(get_oc_service),
 ):
     return svc.register_death(id)
+
+
+@ocupacion_router.patch("/{id}/cambiar-cama", response_model=OcupacionPacienteResponse)
+def cambiar_cama(
+    id: Annotated[int, Path(ge=1)],
+    data: OcupacionCamaUpdate,
+    svc: OcupacionPacienteService = Depends(get_oc_service),
+):
+    return svc.cambiar_cama(id, data)

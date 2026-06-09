@@ -7,6 +7,7 @@ import {
 import * as svc from "../services/ocupacion.service";
 import type {
   AdmitirPayload,
+  CambiarCamaPayload,
   OcupacionPacientePaginated,
 } from "../../../shared/types/internacion";
 
@@ -23,10 +24,15 @@ export function useOcupaciones(
   });
 }
 
-export function useSearchOcupaciones(query: string, offset = 0, limit = 20) {
+export function useSearchOcupaciones(
+  query: string,
+  offset = 0,
+  limit = 20,
+  solo_activos = false,
+) {
   return useQuery({
-    queryKey: [...KEY, "search", { query, offset, limit }],
-    queryFn: () => svc.searchOcupaciones(query, offset, limit),
+    queryKey: [...KEY, "search", { query, offset, limit, solo_activos }],
+    queryFn: () => svc.searchOcupaciones(query, offset, limit, solo_activos),
     enabled: query.length >= 2,
   });
 }
@@ -55,5 +61,17 @@ export function useRegistrarFallecimiento() {
   return useMutation({
     mutationFn: (id: number) => svc.registrarFallecimiento(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+}
+
+export function useCambiarCama() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CambiarCamaPayload }) =>
+      svc.cambiarCama(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      qc.invalidateQueries({ queryKey: ["camas"] });
+    },
   });
 }

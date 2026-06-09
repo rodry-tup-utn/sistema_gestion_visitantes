@@ -1,10 +1,11 @@
-import { User, MapPin, Calendar } from "lucide-react";
-import type { OcupacionPaciente } from "../../shared/types/internacion";
+import { User, MapPin, Calendar, MoveHorizontal } from "lucide-react";
+import type { OcupacionPaciente } from "../../../shared/types/internacion";
 
 interface Props {
   ocupacion: OcupacionPaciente;
   onAlta: (id: number) => void;
   onFallecido: (id: number) => void;
+  onCambiarCama: (id: number) => void;
   isPending: boolean;
 }
 
@@ -14,7 +15,7 @@ const estadoConfig: Record<string, { border: string; badge: string }> = {
   Fallecido: { border: "border-l-red-600", badge: "bg-red-600 text-white" },
 };
 
-export default function OcupacionCard({ ocupacion: o, onAlta, onFallecido, isPending }: Props) {
+export default function OcupacionCard({ ocupacion: o, onAlta, onFallecido, onCambiarCama, isPending }: Props) {
   const config = estadoConfig[o.estado] ?? estadoConfig.Alta;
 
   return (
@@ -49,6 +50,14 @@ export default function OcupacionCard({ ocupacion: o, onAlta, onFallecido, isPen
 
       {o.estado === "Internado" && (
         <div className="mt-3 flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+          <button
+            onClick={() => onCambiarCama(o.id)}
+            disabled={isPending}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-bold tracking-tight text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
+          >
+            <MoveHorizontal size={13} />
+            Cambiar cama
+          </button>
           <button
             onClick={() => onAlta(o.id)}
             disabled={isPending}

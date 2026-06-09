@@ -6,7 +6,10 @@ import Card from "../../../shared/components/Card";
 import Spinner from "../../../shared/components/Spinner";
 import { useNavigate } from "react-router-dom";
 import { useSearchPersonas } from "../../personas/hooks/usePersonas";
-import { useOcupaciones } from "../../ocupacion/hooks/useOcupaciones";
+import {
+  useOcupaciones,
+  useSearchOcupaciones,
+} from "../../ocupacion/hooks/useOcupaciones";
 
 export default function IngresoInternacion() {
   const [dni, setDni] = useState("");
@@ -18,9 +21,22 @@ export default function IngresoInternacion() {
     null,
   );
   const [tipoAcceso, setTipoAcceso] = useState("Visita Estandar");
+  const [pacienteSearch, setPacienteSearch] = useState("");
 
   const { data: searchData } = useSearchPersonas(dni, 0, 5);
-  const { data: ocupacionesData, isLoading } = useOcupaciones(0, 50, true);
+  const { data: ocupacionesData, isLoading } = useOcupaciones(0, 10, true);
+  const { data: searchPacientesData, isLoading: searchPacientesLoading } =
+    useSearchOcupaciones(pacienteSearch, 0, 20, true);
+
+  const isSearchingPaciente = pacienteSearch.length >= 2;
+  const pacientesList = isSearchingPaciente
+    ? searchPacientesData
+    : ocupacionesData;
+
+  function handlePacienteSearchChange(value: string) {
+    setPacienteSearch(value);
+    setSelectedOcupacionId(null);
+  }
   const crear = useCrearAccesoInternacion();
   const navigate = useNavigate();
 
@@ -133,13 +149,19 @@ export default function IngresoInternacion() {
           <h2 className="mb-3 text-sm font-semibold text-gray-700">
             Paciente internado
           </h2>
-          {isLoading ? (
+          <input
+            value={pacienteSearch}
+            onChange={(e) => handlePacienteSearchChange(e.target.value)}
+            placeholder="Buscar paciente por nombre..."
+            className="mb-3 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          />
+          {isLoading || searchPacientesLoading ? (
             <Spinner />
-          ) : !ocupacionesData?.data.length ? (
+          ) : !pacientesList?.data.length ? (
             <p className="text-sm text-muted">No hay pacientes internados</p>
           ) : (
             <div className="max-h-48 space-y-2 overflow-y-auto">
-              {ocupacionesData.data.map((o) => (
+              {pacientesList.data.map((o) => (
                 <label
                   key={o.id}
                   className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition ${selectedOcupacionId === o.id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:bg-gray-50"}`}

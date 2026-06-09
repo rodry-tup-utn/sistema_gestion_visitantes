@@ -75,6 +75,10 @@ export interface OcupacionPacientePaginated {
   total: number;
 }
 
+export interface CambiarCamaPayload {
+  internacion_id: number;
+}
+
 export interface AdmitirPayload {
   persona_id: number;
   internacion_id: number;
