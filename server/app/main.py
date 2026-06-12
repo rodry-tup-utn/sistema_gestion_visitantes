@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+from app.core.config import settings
 from app.core.database import create_db_and_tables
+from scripts.seed import seed
 from app.modules.auth.router import router as auth_router
 from app.modules.user.router import admin_router as user_admin_router, user_router
 from app.modules.persona.router import admin_router as persona_router
@@ -17,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    seed()
     yield
 
 
@@ -32,11 +35,7 @@ app.include_router(servicio_ambulatorio_router)
 app.include_router(ocupacion_router)
 app.include_router(visit_router)
 
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://192.168.137.177:5173",
-]
+origins = [o.strip() for o in settings.cors_origins.split(",")]
 
 app.add_middleware(
     CORSMiddleware,
