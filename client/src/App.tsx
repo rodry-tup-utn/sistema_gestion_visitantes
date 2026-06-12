@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./features/auth/pages/Login";
+import Profile from "./features/auth/pages/Profile";
 import Dashboard from "./shared/pages/Dashboard";
 import UsersList from "./features/admin/users/pages/UsersList";
 import PersonasList from "./features/personas/pages/PersonasList";
@@ -23,6 +24,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           <Route path="/admin/users" element={<AdminRoute />}>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Modal from "../../../../shared/components/Modal";
 import Spinner from "../../../../shared/components/Spinner";
 
@@ -33,36 +33,32 @@ export default function AdmitirForm({
   const [search, setSearch] = useState("");
   const [camaSearch, setCamaSearch] = useState("");
   const { data: allData } = usePersonas(0, 50);
-  const { data: searchData } = useSearchPersonas(search, 0, 50);
+  const { data: searchData } = useSearchPersonas({ query: search, limit: 50 });
 
   const isSearching = search.length >= 2;
   const personas = isSearching
     ? (searchData?.data ?? [])
     : (allData?.data ?? []);
 
-  useEffect(() => {
-    if (isOpen) {
-      setStep("persona");
-      setSelectedPersona(null);
-      setSelectedCamaId(null);
-      setSearch("");
-      setCamaSearch("");
-      setCamas([]);
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (step !== "cama") return;
+  function loadCamas(query?: string) {
     setLoadingCamas(true);
-    const query = camaSearch.length >= 2 ? camaSearch : undefined;
-    getCamas(0, 50, query, undefined, "Disponible")
+    const q = query && query.length >= 2 ? query : undefined;
+    getCamas(0, 50, q, undefined, "Disponible")
       .then((res) => setCamas(res.data))
       .finally(() => setLoadingCamas(false));
-  }, [step, camaSearch]);
+  }
 
   function selectPersona(p: Persona) {
     setSelectedPersona(p);
+    setCamaSearch("");
     setStep("cama");
+    loadCamas();
+  }
+
+  function handleCamaSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    setCamaSearch(v);
+    loadCamas(v);
   }
 
   async function handleSubmit() {
@@ -112,7 +108,7 @@ export default function AdmitirForm({
           </p>
           <input
             value={camaSearch}
-            onChange={(e) => setCamaSearch(e.target.value)}
+            onChange={handleCamaSearchChange}
             placeholder="Buscar cama por sala, cama o servicio..."
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             autoFocus
