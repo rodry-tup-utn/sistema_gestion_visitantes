@@ -28,9 +28,12 @@ def get_all(
     filtro: PersonaFiltro = Depends(),
     svc: PersonaService = Depends(get_service),
 ):
-    if filtro.query:
-        return svc.search(filtro.query, filtro.offset, filtro.limit)
-    return svc.get_all(filtro.offset, filtro.limit)
+    return svc.get_all(filtro)
+
+
+@admin_router.get("/dni/{dni}", response_model=PersonaResponse)
+def get_by_dni(dni: str, svc: PersonaService = Depends(get_service)):
+    return svc.get_by_dni(dni)
 
 
 @admin_router.get("/{id}", response_model=PersonaResponse)

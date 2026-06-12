@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from sqlmodel import Session
+from app.core.config import settings
 from app.core.database import get_session
 from app.modules.auth.service import AuthService
 
@@ -23,9 +24,9 @@ def login_for_access_token(
         key="access_token",
         value=token,
         httponly=False,
-        max_age=1800,
-        samesite="none",
-        secure=True,
+        max_age=settings.access_token_expire_minutes * 60,
+        samesite=settings.cookie_samesite,
+        secure=settings.cookie_secure,
     )
     return {"message": "Login exitoso. Sesión iniciada"}
 

@@ -31,6 +31,7 @@ class PersonaResponse(SQLModel):
 
 
 class PersonaFiltro(SQLModel):
+    dni: str | None = PydanticField(default=None, max_length=20)
     query: str | None = PydanticField(default=None, max_length=50)
     offset: int = PydanticField(default=0, ge=0)
     limit: int = PydanticField(default=20, ge=1, le=100)

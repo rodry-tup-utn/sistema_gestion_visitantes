@@ -8,6 +8,7 @@ from app.modules.user.schemas import (
     UserPaginatedRead,
     UserAuthData,
     UpdatePass,
+    AdminResetPass,
 )
 from sqlmodel import Session
 from app.modules.user.models import User
@@ -128,7 +129,7 @@ class UserService:
 
     def get_all(self, offset: int = 0, limit: int = 20) -> UserPaginatedRead:
         with UnitOfWork(self._session) as uow:
-            users = uow.users.get_all(offset, limit)
+            users = uow.users.get_filtered(offset, limit)
             total = uow.users.count()
             data = [UserAdminRead.model_validate(u) for u in users]
             result = UserPaginatedRead(data=data, total=total)
@@ -174,3 +175,11 @@ class UserService:
             user.hashed_pass = new_hashed_pass
             uow.users.add(user)
         return {"message": "Contraseña cambiada exitosamente"}
+
+    def reset_password(self, user_id: int, data: AdminResetPass):
+        with UnitOfWork(self._session) as uow:
+            user = self._get_or_404(uow, user_id)
+            user.hashed_pass = get_password_hash(data.new_pass)
+            user.updated_at = datetime.now(timezone.utc)
+            uow.users.add(user)
+        return {"message": "Contraseña restablecida exitosamente"}

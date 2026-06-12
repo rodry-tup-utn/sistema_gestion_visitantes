@@ -45,7 +45,7 @@ class ServicioInternacionService:
         self, offset: int = 0, limit: int = 20
     ) -> ServicioInternacionPaginatedRead:
         with UnitOfWork(self._session) as uow:
-            items = uow.servicios_internacion.get_all(offset, limit)
+            items = uow.servicios_internacion.get_filtered(offset, limit)
             total = uow.servicios_internacion.count()
             data = [ServicioInternacionResponse.model_validate(i) for i in items]
         return ServicioInternacionPaginatedRead(data=data, total=total)
@@ -195,7 +195,7 @@ class ServicioAmbulatorioService:
         self, offset: int = 0, limit: int = 20
     ) -> ServicioAmbulatorioPaginatedRead:
         with UnitOfWork(self._session) as uow:
-            items = uow.servicios_ambulatorios.get_all(offset, limit)
+            items = uow.servicios_ambulatorios.get_filtered(offset, limit)
             total = uow.servicios_ambulatorios.count()
             data = [ServicioAmbulatorioResponse.model_validate(i) for i in items]
         return ServicioAmbulatorioPaginatedRead(data=data, total=total)
@@ -354,9 +354,7 @@ class OcupacionPacienteService:
 
             nueva_cama = uow.internaciones.get_by_id(data.internacion_id)
             if not nueva_cama:
-                raise HTTPException(
-                    status.HTTP_404_NOT_FOUND, "Cama no encontrada"
-                )
+                raise HTTPException(status.HTTP_404_NOT_FOUND, "Cama no encontrada")
             if nueva_cama.estado_disponibilidad != EstadoDisponibilidad.DISPONIBLE:
                 raise HTTPException(
                     status.HTTP_400_BAD_REQUEST, "La cama no está disponible"
@@ -381,7 +379,7 @@ class OcupacionPacienteService:
         self, offset: int = 0, limit: int = 20
     ) -> OcupacionPacientePaginatedRead:
         with UnitOfWork(self._session) as uow:
-            items = uow.ocupaciones.get_all(offset, limit)
+            items = uow.ocupaciones.get_filtered(offset, limit)
             total = uow.ocupaciones.count()
             data = [OcupacionPacienteResponse.model_validate(i) for i in items]
         return OcupacionPacientePaginatedRead(data=data, total=total)

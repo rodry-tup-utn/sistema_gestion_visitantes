@@ -15,7 +15,12 @@ from app.modules.visit.schemas import (
     AccesoActivoItem,
     AccesoActivoList,
 )
-from app.modules.visit.models import EstadoAcceso, AccesoInternacion, AccesoAmbulatorio, TipoAcceso
+from app.modules.visit.models import (
+    EstadoAcceso,
+    AccesoInternacion,
+    AccesoAmbulatorio,
+    TipoAcceso,
+)
 from app.modules.internacion.models import OcupacionPaciente, EstadoPaciente
 from app.modules.persona.models import Persona
 from datetime import datetime, timezone
@@ -61,24 +66,57 @@ class AccesoService:
     def __init__(self, session: Session):
         self._session = session
 
+    def _tiene_acceso_activo(self, uow: UnitOfWork, persona_id: int) -> bool:
+        return (
+            uow.accesos_internacion.session.exec(
+                select(AccesoInternacion.id).where(
+                    AccesoInternacion.persona_id == persona_id,
+                    AccesoInternacion.estado == EstadoAcceso.ACTIVO,
+                )
+            ).first()
+            is not None
+            or uow.accesos_ambulatorio.session.exec(
+                select(AccesoAmbulatorio.id).where(
+                    AccesoAmbulatorio.persona_id == persona_id,
+                    AccesoAmbulatorio.estado == EstadoAcceso.ACTIVO,
+                )
+            ).first()
+            is not None
+        )
+
     # ─── AccesoInternacion ───
 
-    def crear_acceso_internacion(self, data: CreateAccesoInternacionPayload) -> AccesoInternacionResponse:
+    def crear_acceso_internacion(
+        self, data: CreateAccesoInternacionPayload
+    ) -> AccesoInternacionResponse:
         with UnitOfWork(self._session) as uow:
             persona = uow.personas.get_by_dni(data.persona_dni)
             if not persona:
                 from app.modules.persona.schemas import PersonaCreate
-                persona = uow.personas.add_from_schema(PersonaCreate(
-                    dni=data.persona_dni,
-                    nombre=data.persona_nombre,
-                    apellido=data.persona_apellido,
-                ))
+
+                persona = uow.personas.add_from_schema(
+                    PersonaCreate(
+                        dni=data.persona_dni,
+                        nombre=data.persona_nombre,
+                        apellido=data.persona_apellido,
+                    )
+                )
+
+            if self._tiene_acceso_activo(uow, persona.id):
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    "El visitante ya tiene un ingreso activo. Finalice el acceso actual antes de registrar uno nuevo.",
+                )
 
             ocupacion = uow.ocupaciones.get_by_id(data.ocupacion_paciente_id)
             if not ocupacion:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, "Ocupación no encontrada")
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, "Ocupación no encontrada"
+                )
             if ocupacion.estado != EstadoPaciente.INTERNADO:
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, "El paciente no está internado")
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "El paciente no está internado"
+                )
 
             internacion = uow.internaciones.get_by_id(ocupacion.internacion_id)
             if not internacion:
@@ -104,7 +142,9 @@ class AccesoService:
             if not entity:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Acceso no encontrado")
             if entity.estado != EstadoAcceso.ACTIVO:
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado")
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado"
+                )
             entity.estado = EstadoAcceso.FINALIZADO
             entity.fecha_salida = datetime.now(timezone.utc)
             uow.accesos_internacion.add(entity)
@@ -117,31 +157,42 @@ class AccesoService:
             if not entity:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Acceso no encontrado")
             if entity.estado != EstadoAcceso.ACTIVO:
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado")
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado"
+                )
             entity.fecha_ingreso = datetime.now(timezone.utc)
             uow.accesos_internacion.add(entity)
             result = AccesoInternacionResponse.model_validate(entity)
             _poblar_vencido_int(result)
         return result
 
-    def get_accesos_internacion(self, filtro: AccesoInternacionFiltro) -> AccesoInternacionPaginated:
+    def get_accesos_internacion(
+        self, filtro: AccesoInternacionFiltro
+    ) -> AccesoInternacionPaginated:
         with UnitOfWork(self._session) as uow:
             if filtro.persona_id is not None:
-                items = uow.accesos_internacion.get_by_persona(filtro.persona_id, filtro.activos)
+                items = uow.accesos_internacion.get_by_persona(
+                    filtro.persona_id, filtro.activos
+                )
                 total = len(items)
             elif filtro.query:
-                items = uow.accesos_internacion.search(filtro.query, filtro.offset, filtro.limit)
+                items = uow.accesos_internacion.search(
+                    filtro.query, filtro.offset, filtro.limit
+                )
                 total = uow.accesos_internacion.count_search_results(filtro.query)
             elif filtro.activos:
                 items = self._session.exec(
                     select(AccesoInternacion)
                     .where(AccesoInternacion.estado == EstadoAcceso.ACTIVO)
                     .order_by(AccesoInternacion.fecha_ingreso.desc())
-                    .offset(filtro.offset).limit(filtro.limit)
+                    .offset(filtro.offset)
+                    .limit(filtro.limit)
                 ).all()
                 total = uow.accesos_internacion.count_activos()
             else:
-                items = uow.accesos_internacion.get_all(filtro.offset, filtro.limit)
+                items = uow.accesos_internacion.get_filtered(
+                    filtro.offset, filtro.limit
+                )
                 total = uow.accesos_internacion.count()
             data = [AccesoInternacionResponse.model_validate(i) for i in items]
             for r in data:
@@ -150,20 +201,35 @@ class AccesoService:
 
     # ─── AccesoAmbulatorio ───
 
-    def crear_acceso_ambulatorio(self, data: CreateAccesoAmbulatorioPayload) -> AccesoAmbulatorioResponse:
+    def crear_acceso_ambulatorio(
+        self, data: CreateAccesoAmbulatorioPayload
+    ) -> AccesoAmbulatorioResponse:
         with UnitOfWork(self._session) as uow:
             persona = uow.personas.get_by_dni(data.persona_dni)
             if not persona:
                 from app.modules.persona.schemas import PersonaCreate
-                persona = uow.personas.add_from_schema(PersonaCreate(
-                    dni=data.persona_dni,
-                    nombre=data.persona_nombre,
-                    apellido=data.persona_apellido,
-                ))
 
-            servicio = uow.servicios_ambulatorios.get_by_id(data.servicio_ambulatorio_id)
+                persona = uow.personas.add_from_schema(
+                    PersonaCreate(
+                        dni=data.persona_dni,
+                        nombre=data.persona_nombre,
+                        apellido=data.persona_apellido,
+                    )
+                )
+
+            if self._tiene_acceso_activo(uow, persona.id):
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    "El visitante ya tiene un ingreso activo. Finalice el acceso actual antes de registrar uno nuevo.",
+                )
+
+            servicio = uow.servicios_ambulatorios.get_by_id(
+                data.servicio_ambulatorio_id
+            )
             if not servicio:
-                raise HTTPException(status.HTTP_404_NOT_FOUND, "Servicio ambulatorio no encontrado")
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, "Servicio ambulatorio no encontrado"
+                )
 
             entity = AccesoAmbulatorio(
                 persona_id=persona.id,
@@ -183,7 +249,9 @@ class AccesoService:
             if not entity:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Acceso no encontrado")
             if entity.estado != EstadoAcceso.ACTIVO:
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado")
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado"
+                )
             entity.estado = EstadoAcceso.FINALIZADO
             entity.fecha_salida = datetime.now(timezone.utc)
             uow.accesos_ambulatorio.add(entity)
@@ -196,47 +264,62 @@ class AccesoService:
             if not entity:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, "Acceso no encontrado")
             if entity.estado != EstadoAcceso.ACTIVO:
-                raise HTTPException(status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado")
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "El acceso ya fue finalizado"
+                )
             entity.fecha_ingreso = datetime.now(timezone.utc)
             uow.accesos_ambulatorio.add(entity)
             result = AccesoAmbulatorioResponse.model_validate(entity)
             _poblar_vencido_amb(result)
         return result
 
-    def get_accesos_ambulatorio(self, filtro: AccesoAmbulatorioFiltro) -> AccesoAmbulatorioPaginated:
+    def get_accesos_ambulatorio(
+        self, filtro: AccesoAmbulatorioFiltro
+    ) -> AccesoAmbulatorioPaginated:
         with UnitOfWork(self._session) as uow:
             if filtro.persona_id is not None:
-                items = uow.accesos_ambulatorio.get_by_persona(filtro.persona_id, filtro.activos)
+                items = uow.accesos_ambulatorio.get_by_persona(
+                    filtro.persona_id, filtro.activos
+                )
                 total = len(items)
             elif filtro.query:
-                items = uow.accesos_ambulatorio.search(filtro.query, filtro.offset, filtro.limit)
+                items = uow.accesos_ambulatorio.search(
+                    filtro.query, filtro.offset, filtro.limit
+                )
                 total = uow.accesos_ambulatorio.count_search_results(filtro.query)
             elif filtro.activos:
                 items = self._session.exec(
                     select(AccesoAmbulatorio)
                     .where(AccesoAmbulatorio.estado == EstadoAcceso.ACTIVO)
                     .order_by(AccesoAmbulatorio.fecha_ingreso.desc())
-                    .offset(filtro.offset).limit(filtro.limit)
+                    .offset(filtro.offset)
+                    .limit(filtro.limit)
                 ).all()
                 total = uow.accesos_ambulatorio.count_activos()
             else:
-                items = uow.accesos_ambulatorio.get_all(filtro.offset, filtro.limit)
+                items = uow.accesos_ambulatorio.get_filtered(
+                    filtro.offset, filtro.limit
+                )
                 total = uow.accesos_ambulatorio.count()
             data = [AccesoAmbulatorioResponse.model_validate(i) for i in items]
             for r in data:
                 _poblar_vencido_amb(r)
         return AccesoAmbulatorioPaginated(data=data, total=total)
 
-    def get_accesos_vencidos(self, offset: int = 0, limit: int = 50) -> AccesoVencidoList:
+    def get_accesos_vencidos(
+        self, offset: int = 0, limit: int = 50
+    ) -> AccesoVencidoList:
         with UnitOfWork(self._session) as uow:
             ahora = datetime.now(timezone.utc)
             items_int = self._session.exec(
-                select(AccesoInternacion)
-                .where(AccesoInternacion.estado == EstadoAcceso.ACTIVO)
+                select(AccesoInternacion).where(
+                    AccesoInternacion.estado == EstadoAcceso.ACTIVO
+                )
             ).all()
             items_amb = self._session.exec(
-                select(AccesoAmbulatorio)
-                .where(AccesoAmbulatorio.estado == EstadoAcceso.ACTIVO)
+                select(AccesoAmbulatorio).where(
+                    AccesoAmbulatorio.estado == EstadoAcceso.ACTIVO
+                )
             ).all()
 
             vencidos: list[AccesoVencidoItem] = []
@@ -244,32 +327,36 @@ class AccesoService:
                 max_min = _duracion_maxima_minutos(a.tipo_acceso)
                 transcurridos = int((ahora - a.fecha_ingreso).total_seconds() // 60)
                 if transcurridos > max_min:
-                    vencidos.append(AccesoVencidoItem(
-                        id=a.id,
-                        tipo="internacion",
-                        persona_nombre_cache=a.persona_nombre_cache,
-                        destino_cache=a.ubicacion_cache,
-                        tipo_acceso=a.tipo_acceso,
-                        fecha_ingreso=a.fecha_ingreso,
-                        minutos_transcurridos=transcurridos,
-                    ))
+                    vencidos.append(
+                        AccesoVencidoItem(
+                            id=a.id,
+                            tipo="internacion",
+                            persona_nombre_cache=a.persona_nombre_cache,
+                            destino_cache=a.ubicacion_cache,
+                            tipo_acceso=a.tipo_acceso,
+                            fecha_ingreso=a.fecha_ingreso,
+                            minutos_transcurridos=transcurridos,
+                        )
+                    )
             for a in items_amb:
                 max_min = _duracion_maxima_minutos(a.tipo_acceso)
                 transcurridos = int((ahora - a.fecha_ingreso).total_seconds() // 60)
                 if transcurridos > max_min:
-                    vencidos.append(AccesoVencidoItem(
-                        id=a.id,
-                        tipo="ambulatorio",
-                        persona_nombre_cache=a.persona_nombre_cache,
-                        destino_cache=a.servicio_nombre_cache,
-                        tipo_acceso=a.tipo_acceso,
-                        fecha_ingreso=a.fecha_ingreso,
-                        minutos_transcurridos=transcurridos,
-                    ))
+                    vencidos.append(
+                        AccesoVencidoItem(
+                            id=a.id,
+                            tipo="ambulatorio",
+                            persona_nombre_cache=a.persona_nombre_cache,
+                            destino_cache=a.servicio_nombre_cache,
+                            tipo_acceso=a.tipo_acceso,
+                            fecha_ingreso=a.fecha_ingreso,
+                            minutos_transcurridos=transcurridos,
+                        )
+                    )
 
             vencidos.sort(key=lambda x: x.minutos_transcurridos, reverse=True)
             total = len(vencidos)
-            paginated = vencidos[offset:offset + limit]
+            paginated = vencidos[offset : offset + limit]
         return AccesoVencidoList(data=paginated, total=total)
 
     def get_activos(
@@ -299,36 +386,44 @@ class AccesoService:
         for acceso, p_dni in int_results:
             max_min = _duracion_maxima_minutos(acceso.tipo_acceso)
             transcurridos = int((ahora - acceso.fecha_ingreso).total_seconds() // 60)
-            items.append(AccesoActivoItem(
-                id=acceso.id,
-                tipo="internacion",
-                persona_nombre_cache=acceso.persona_nombre_cache,
-                persona_dni=p_dni,
-                destino_cache=acceso.ubicacion_cache,
-                tipo_acceso=acceso.tipo_acceso.value,
-                fecha_ingreso=acceso.fecha_ingreso,
-                minutos_transcurridos=transcurridos,
-                vencido=transcurridos > max_min,
-            ))
+            items.append(
+                AccesoActivoItem(
+                    id=acceso.id,
+                    tipo="internacion",
+                    persona_nombre_cache=acceso.persona_nombre_cache,
+                    persona_dni=p_dni,
+                    destino_cache=acceso.ubicacion_cache,
+                    tipo_acceso=acceso.tipo_acceso.value,
+                    fecha_ingreso=acceso.fecha_ingreso,
+                    minutos_transcurridos=transcurridos,
+                    vencido=transcurridos > max_min,
+                )
+            )
 
         for acceso, p_dni in aml_results:
             max_min = _duracion_maxima_minutos(acceso.tipo_acceso)
             transcurridos = int((ahora - acceso.fecha_ingreso).total_seconds() // 60)
-            items.append(AccesoActivoItem(
-                id=acceso.id,
-                tipo="ambulatorio",
-                persona_nombre_cache=acceso.persona_nombre_cache,
-                persona_dni=p_dni,
-                destino_cache=acceso.servicio_nombre_cache,
-                tipo_acceso=acceso.tipo_acceso.value,
-                fecha_ingreso=acceso.fecha_ingreso,
-                minutos_transcurridos=transcurridos,
-                vencido=transcurridos > max_min,
-            ))
+            items.append(
+                AccesoActivoItem(
+                    id=acceso.id,
+                    tipo="ambulatorio",
+                    persona_nombre_cache=acceso.persona_nombre_cache,
+                    persona_dni=p_dni,
+                    destino_cache=acceso.servicio_nombre_cache,
+                    tipo_acceso=acceso.tipo_acceso.value,
+                    fecha_ingreso=acceso.fecha_ingreso,
+                    minutos_transcurridos=transcurridos,
+                    vencido=transcurridos > max_min,
+                )
+            )
 
         if query:
             q = query.lower()
-            items = [i for i in items if q in i.persona_nombre_cache.lower() or q in i.destino_cache.lower()]
+            items = [
+                i
+                for i in items
+                if q in i.persona_nombre_cache.lower() or q in i.destino_cache.lower()
+            ]
         if dni:
             items = [i for i in items if dni in i.persona_dni]
         if tipo_acceso:
@@ -336,5 +431,5 @@ class AccesoService:
 
         items.sort(key=lambda x: x.fecha_ingreso, reverse=True)
         total = len(items)
-        paginated = items[offset:offset + limit]
+        paginated = items[offset : offset + limit]
         return AccesoActivoList(data=paginated, total=total)

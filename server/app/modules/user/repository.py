@@ -12,7 +12,7 @@ class UserRepository(BaseRepository["User"]):
     def __init__(self, session: Session) -> None:
         super().__init__(session, User)
 
-    def get_all(self, offset: int = 0, limit: int = 20) -> Sequence[User]:
+    def get_filtered(self, offset: int = 0, limit: int = 20) -> Sequence[User]:
         statement = select(User).order_by(User.name).offset(offset).limit(limit)
         return self.session.exec(statement).all()
 

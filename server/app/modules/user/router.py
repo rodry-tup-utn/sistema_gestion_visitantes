@@ -10,6 +10,7 @@ from app.modules.user.schemas import (
     UserPaginatedRead,
     TokenPayloadData,
     UpdatePass,
+    AdminResetPass,
     UserFiltro,
 )
 from typing import Annotated
@@ -138,3 +139,12 @@ def reactivate_user(
     admin_user: UserResponse = Depends(require_role(["ADMIN"])),
 ):
     return svc.reactivate(user_id, admin_user.id)
+
+
+@admin_router.patch("/{user_id}/reset-password")
+def admin_reset_password(
+    data: AdminResetPass,
+    user_id: Annotated[int, Path(ge=1)],
+    svc: UserService = Depends(get_user_service),
+):
+    return svc.reset_password(user_id, data)

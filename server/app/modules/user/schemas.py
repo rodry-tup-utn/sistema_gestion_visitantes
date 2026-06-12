@@ -60,6 +60,10 @@ class UpdatePass(BaseModel):
     new_pass: str = Field(max_length=255, min_length=8)
 
 
+class AdminResetPass(BaseModel):
+    new_pass: str = Field(max_length=255, min_length=8)
+
+
 class UserFiltro(SQLModel):
     query: str | None = PydanticField(default=None, max_length=50)
     offset: int = PydanticField(default=0, ge=0)
