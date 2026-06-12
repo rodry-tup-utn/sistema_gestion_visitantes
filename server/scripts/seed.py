@@ -4,6 +4,7 @@ Uso: python -m scripts.seed
 
 from datetime import date
 from sqlmodel import Session, select
+from app.core.config import settings
 from app.core.database import engine
 from app.modules.user.models import User, Role
 from app.core.security import get_password_hash
@@ -25,31 +26,31 @@ def seed():
             admin = User(
                 lastname="Admin",
                 name="Admin",
-                email="admin@admin.com",
-                hashed_pass=get_password_hash("admin123"),
+                email=settings.seed_admin_email,
+                hashed_pass=get_password_hash(settings.seed_admin_password),
                 role=Role.ADMIN,
             )
             session.add(admin)
             session.commit()
-            print("✓ Usuario administrador creado (admin@admin.com / admin123)")
+            print(f"✓ Usuario administrador creado ({settings.seed_admin_email})")
         else:
             print("→ Usuarios ya existen, se omite creación de admin")
 
             # ─── Usuario operador ───
         existing_operator = session.exec(
-            select(User).where(User.email == "operador@operador.com")
+            select(User).where(User.email == settings.seed_operator_email)
         ).first()
         if not existing_operator:
             oper = User(
                 lastname="Operador",
                 name="Operador",
-                email="operador@operador.com",
-                hashed_pass=get_password_hash("operador123"),
+                email=settings.seed_operator_email,
+                hashed_pass=get_password_hash(settings.seed_operator_password),
                 role=Role.OPERATOR,
             )
             session.add(oper)
             session.commit()
-            print("✓ Usuario operador creado (operador@test.com / operador123)")
+            print(f"✓ Usuario operador creado ({settings.seed_operator_email})")
         else:
             print("→ Operador ya existe, se omite")
 
