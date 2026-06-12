@@ -3,8 +3,8 @@ from datetime import datetime
 from pydantic import Field as PydanticField
 from app.modules.visit.models import TipoAcceso, EstadoAcceso
 
-
 # ─── AccesoInternacion ───
+
 
 class CreateAccesoInternacionPayload(SQLModel):
     persona_dni: str = Field(max_length=20)
@@ -19,7 +19,7 @@ class AccesoInternacionFiltro(SQLModel):
     offset: int = PydanticField(default=0, ge=0)
     limit: int = PydanticField(default=20, ge=1, le=100)
     activos: bool = True
-    persona_id: int | None = Field(default=None, ge=1)
+    persona_id: int | None = PydanticField(default=None, ge=1)
 
 
 class AccesoInternacionResponse(SQLModel):
@@ -45,6 +45,7 @@ class AccesoInternacionPaginated(SQLModel):
 
 # ─── AccesoAmbulatorio ───
 
+
 class CreateAccesoAmbulatorioPayload(SQLModel):
     persona_dni: str = Field(max_length=20)
     persona_nombre: str = Field(max_length=80)
@@ -58,7 +59,7 @@ class AccesoAmbulatorioFiltro(SQLModel):
     offset: int = PydanticField(default=0, ge=0)
     limit: int = PydanticField(default=20, ge=1, le=100)
     activos: bool = True
-    persona_id: int | None = Field(default=None, ge=1)
+    persona_id: int | None = PydanticField(default=None, ge=1)
 
 
 class AccesoAmbulatorioResponse(SQLModel):
@@ -82,6 +83,7 @@ class AccesoAmbulatorioPaginated(SQLModel):
 
 # ─── Vencidos unificado ───
 
+
 class AccesoVencidoItem(SQLModel):
     id: int
     tipo: str
@@ -91,12 +93,14 @@ class AccesoVencidoItem(SQLModel):
     fecha_ingreso: datetime
     minutos_transcurridos: int
 
+
 class AccesoVencidoList(SQLModel):
     data: list[AccesoVencidoItem]
     total: int
 
 
 # ─── Activos unificado (vista visitantes) ───
+
 
 class AccesoActivoItem(SQLModel):
     id: int
@@ -108,6 +112,7 @@ class AccesoActivoItem(SQLModel):
     fecha_ingreso: datetime
     minutos_transcurridos: int
     vencido: bool
+
 
 class AccesoActivoList(SQLModel):
     data: list[AccesoActivoItem]

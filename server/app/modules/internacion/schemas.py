@@ -5,9 +5,10 @@ from app.modules.internacion.models import (
     EstadoServicio,
     EstadoPaciente,
 )
-
+from pydantic import Field as PydanticField
 
 # ─── ServicioInternacion ───
+
 
 class ServicioInternacionCreate(SQLModel):
     nombre_servicio: str = Field(max_length=100)
@@ -34,11 +35,12 @@ class ServicioInternacionPaginatedRead(SQLModel):
 
 # ─── Internacion (Camas) ───
 
+
 class InternacionFiltro(SQLModel):
-    query: str | None = Field(default=None, max_length=50)
-    offset: int = Field(default=0, ge=0)
-    limit: int = Field(default=20, ge=1, le=100)
-    servicio_id: int | None = Field(default=None, ge=1)
+    query: str | None = PydanticField(default=None, max_length=50)
+    offset: int = PydanticField(default=0, ge=0)
+    limit: int = PydanticField(default=20, ge=1, le=100)
+    servicio_id: int | None = PydanticField(default=None, ge=1)
     estado_disponibilidad: EstadoDisponibilidad | None = None
 
 
@@ -46,7 +48,9 @@ class InternacionCreate(SQLModel):
     servicio_internacion_id: int = Field(ge=1)
     sala: str = Field(max_length=50)
     cama: str = Field(max_length=20)
-    estado_disponibilidad: EstadoDisponibilidad = Field(default=EstadoDisponibilidad.DISPONIBLE)
+    estado_disponibilidad: EstadoDisponibilidad = Field(
+        default=EstadoDisponibilidad.DISPONIBLE
+    )
 
 
 class InternacionUpdate(SQLModel):
@@ -78,6 +82,7 @@ class InternacionPaginatedRead(SQLModel):
 
 # ─── ServicioAmbulatorio ───
 
+
 class ServicioAmbulatorioCreate(SQLModel):
     nombre_servicio: str = Field(max_length=100)
     ubicacion_interna: str | None = Field(max_length=100, default=None)
@@ -105,6 +110,7 @@ class ServicioAmbulatorioPaginatedRead(SQLModel):
 
 
 # ─── OcupacionPaciente ───
+
 
 class OcupacionCamaUpdate(SQLModel):
     internacion_id: int = Field(ge=1)

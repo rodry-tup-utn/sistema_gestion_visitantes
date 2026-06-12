@@ -57,11 +57,11 @@ class UserPaginatedRead(SQLModel):
 
 class UpdatePass(BaseModel):
     old_pass: str
-    new_pass: str = Field(max_length=255, min_length=8)
+    new_pass: str = PydanticField(max_length=255, min_length=8)
 
 
 class AdminResetPass(BaseModel):
-    new_pass: str = Field(max_length=255, min_length=8)
+    new_pass: str = PydanticField(max_length=255, min_length=8)
 
 
 class UserFiltro(SQLModel):
