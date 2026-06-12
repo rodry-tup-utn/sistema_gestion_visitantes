@@ -11,10 +11,23 @@
 
 </div>
 
----
+<br>
+
+## 🌐 Deploy
+
+| Componente                | URL                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| **Frontend**              | [https://sgv-frontend-seven.vercel.app](https://sgv-frontend-seven.vercel.app) |
+| **Backend API**           | [https://sgv-backend-w6en.onrender.com](https://sgv-backend-w6en.onrender.com) |
+| **Documentación Swagger** | [`/docs`](https://sgv-backend-w6en.onrender.com/docs)                          |
+
+ <br>
+
 ## 👤 Alumnos
+
 - **Ramirez, Rodrigo**
 - **Mercado, Leandro**
+
 ## 📸 Capturas de Pantalla
 
 > Ver todas las capturas en [`SCREENSHOTS.md`](./SCREENSHOTS.md).
