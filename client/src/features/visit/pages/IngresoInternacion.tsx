@@ -14,6 +14,7 @@ import {
   useSearchOcupaciones,
 } from "../../ocupacion/hooks/useOcupaciones";
 import type { Persona } from "../../../shared/types/persona";
+import type { TipoAcceso } from "../../../shared/types/visita";
 
 export default function IngresoInternacion() {
   const [dni, setDni] = useState("");
@@ -25,7 +26,7 @@ export default function IngresoInternacion() {
   const [selectedOcupacionId, setSelectedOcupacionId] = useState<number | null>(
     null,
   );
-  const [tipoAcceso, setTipoAcceso] = useState("Visita Estandar");
+  const [tipoAcceso, setTipoAcceso] = useState<TipoAcceso>("Visita Estandar");
   const [pacienteSearch, setPacienteSearch] = useState("");
   const [searching, setSearching] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -216,7 +217,7 @@ export default function IngresoInternacion() {
           </h2>
           <select
             value={tipoAcceso}
-            onChange={(e) => setTipoAcceso(e.target.value)}
+            onChange={(e) => setTipoAcceso(e.target.value as TipoAcceso)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="Visita Estandar">Visita Estándar</option>

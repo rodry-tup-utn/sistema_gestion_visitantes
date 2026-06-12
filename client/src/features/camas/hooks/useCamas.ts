@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as svc from "../services/camas.service";
-import type { CreateCamaPayload } from "../../shared/types/internacion";
+import type { CreateCamaPayload } from "../../../shared/types/internacion";
 
 const KEY = ["camas"];
 

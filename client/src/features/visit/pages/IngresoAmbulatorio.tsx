@@ -22,7 +22,7 @@ export default function IngresoAmbulatorio() {
   const [selectedServicioId, setSelectedServicioId] = useState<number | null>(
     null,
   );
-  const [tipoAcceso, setTipoAcceso] = useState("Consulta");
+  const [tipoAcceso, setTipoAcceso] = useState<TipoAcceso>("Consulta");
   const [searching, setSearching] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -190,7 +190,7 @@ export default function IngresoAmbulatorio() {
           </h2>
           <select
             value={tipoAcceso}
-            onChange={(e) => setTipoAcceso(e.target.value)}
+            onChange={(e) => setTipoAcceso(e.target.value as TipoAcceso)}
             className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="Consulta">Consulta</option>

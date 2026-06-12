@@ -1,9 +1,16 @@
-export type TipoAcceso = "Urgencia" | "Cuidador" | "Visita";
+export type TipoAcceso =
+  | "Visita Estandar"
+  | "Cuidador"
+  | "Urgencia"
+  | "Consulta"
+  | "Estudio";
 
 export const TIEMPOS_ACCESO: Record<TipoAcceso, number> = {
-  Urgencia: 45,
+  "Visita Estandar": 120,
   Cuidador: 720,
-  Visita: 120,
+  Urgencia: 45,
+  Consulta: 120,
+  Estudio: 120,
 };
 
 export interface AccesoInternacion {

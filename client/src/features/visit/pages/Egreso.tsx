@@ -2,7 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 import { useAccesosInternacion, useFinalizarAccesoInternacion, useAccesosAmbulatorio, useFinalizarAccesoAmbulatorio, useRenovarAccesoInternacion, useRenovarAccesoAmbulatorio } from "../hooks/useAccesos";
-import { useSearchPersonas } from "../../admin/personas/hooks/usePersonas";
+import { useSearchPersonas } from "../../personas/hooks/usePersonas";
+import type { Persona } from "../../../shared/types/persona";
 import Button from "../../../shared/components/Button";
 import Card from "../../../shared/components/Card";
 import Spinner from "../../../shared/components/Spinner";
@@ -23,7 +24,7 @@ export default function Egreso() {
 
   function handleSearchPersona() {
     if (!searchDni) return;
-    const found = searchData?.data.find((p) => p.dni === searchDni);
+    const found = searchData?.data.find((p: Persona) => p.dni === searchDni);
     if (found) {
       setPersonaId(found.id);
       setPersonaNombre(`${found.nombre} ${found.apellido}`);

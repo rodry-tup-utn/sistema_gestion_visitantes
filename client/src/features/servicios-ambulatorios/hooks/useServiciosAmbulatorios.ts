@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as svc from "../services/serviciosAmbulatorios.service";
-import type { CreateServicioAmbulatorioPayload } from "../../shared/types/internacion";
+import type { CreateServicioAmbulatorioPayload } from "../../../shared/types/internacion";
 
 const KEY = ["servicios-ambulatorios"];
 
