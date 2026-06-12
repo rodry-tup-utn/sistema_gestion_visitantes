@@ -9,7 +9,7 @@ import {
   DoorOpen,
   BarChart3,
 } from "lucide-react";
-import { useAuth } from "../../features/auth/context/AuthContext";
+import { useAuth } from "../../features/auth/context/useAuth";
 
 interface NavCardProps {
   icon: React.ReactNode;

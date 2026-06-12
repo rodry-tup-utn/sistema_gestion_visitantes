@@ -9,7 +9,10 @@ interface Props {
 export default function SearchInput({ value, onChange, placeholder }: Props) {
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
+      <Search
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+        size={18}
+      />
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

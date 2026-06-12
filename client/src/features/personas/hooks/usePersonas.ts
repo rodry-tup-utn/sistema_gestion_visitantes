@@ -20,14 +20,13 @@ export function usePersonas(offset = 0, limit = 20) {
 }
 
 export function useSearchPersonas(
-  query: string,
-  offset = 0,
-  limit = 20,
+  filtro: { query?: string; dni?: string; offset?: number; limit?: number },
 ): UseQueryResult<PersonaPaginated> {
   return useQuery({
-    queryKey: [...KEY, "search", { query, offset, limit }],
-    queryFn: () => svc.searchPersonas(query, offset, limit),
-    enabled: query.length >= 2,
+    queryKey: [...KEY, "search", filtro],
+    queryFn: () => svc.searchPersonas(filtro),
+    enabled:
+      (filtro.query?.length ?? 0) >= 2 || (filtro.dni?.length ?? 0) >= 2,
   });
 }
 

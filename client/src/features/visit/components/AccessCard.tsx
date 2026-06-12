@@ -1,13 +1,14 @@
-import { Clock, RefreshCw, User, MapPin, Tag, DoorOpen, Calendar } from "lucide-react";
+import {
+  Clock,
+  RefreshCw,
+  User,
+  MapPin,
+  Tag,
+  DoorOpen,
+  Calendar,
+} from "lucide-react";
+import { TIEMPOS_ACCESO } from "../../../shared/types/visita";
 import type { AccesoActivoItem } from "../../../shared/types/visita";
-
-function formatDNI(dni: string): string {
-  if (dni.length <= 3) return dni;
-  const s = dni.replace(/\D/g, "");
-  const parts: string[] = [];
-  for (let i = 0; i < s.length; i += 3) parts.push(s.slice(i, i + 3));
-  return parts.join(".");
-}
 
 export default function AccessCard({
   item,
@@ -22,19 +23,15 @@ export default function AccessCard({
 }) {
   const isInt = item.tipo === "internacion";
 
-  const vencidoPct = (() => {
-    const maxMin =
-      item.tipo_acceso === "Urgencia"
-        ? 45
-        : item.tipo_acceso === "Cuidador"
-          ? 720
-          : 120;
-    if (maxMin === 45) return 0;
-    return Math.min(
-      100,
-      Math.round((item.minutos_transcurridos / maxMin) * 100),
-    );
-  })();
+  const maxMin = TIEMPOS_ACCESO[item.tipo_acceso];
+
+  const vencidoPct =
+    item.tipo_acceso === "Urgencia"
+      ? 0
+      : Math.min(
+          100,
+          Math.round((item.minutos_transcurridos / maxMin) * 100),
+        );
 
   const timerBg = item.vencido
     ? "bg-red-600 text-white"
@@ -54,21 +51,12 @@ export default function AccessCard({
     ? "bg-blue-100 text-blue-700"
     : "bg-emerald-100 text-emerald-700";
 
-  const maxMin =
-    item.tipo_acceso === "Urgencia"
-      ? 45
-      : item.tipo_acceso === "Cuidador"
-        ? 720
-        : 120;
-
   const hours = Math.floor(item.minutos_transcurridos / 60);
   const mins = item.minutos_transcurridos % 60;
   const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
   const fechaIngreso = new Date(item.fecha_ingreso);
-  const fechaExpiracion = new Date(
-    fechaIngreso.getTime() + maxMin * 60 * 1000,
-  );
+  const fechaExpiracion = new Date(fechaIngreso.getTime() + maxMin * 60 * 1000);
 
   const dtOptions: Intl.DateTimeFormatOptions = {
     day: "2-digit",
@@ -96,7 +84,7 @@ export default function AccessCard({
                 {item.persona_nombre_cache}
               </p>
               <p className="text-xs text-muted">
-                DNI {formatDNI(item.persona_dni)}
+                DNI {Number(item.persona_dni).toLocaleString("ES-Ar")}
               </p>
             </div>
           </div>

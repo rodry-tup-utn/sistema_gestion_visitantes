@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   useOcupaciones,
@@ -47,9 +47,10 @@ export default function OcupacionesList() {
     registrarFallecimiento.isPending ||
     cambiarCama.isPending;
 
-  useEffect(() => {
+  function handleSearchChange(value: string) {
+    setSearch(value);
     setPage(0);
-  }, [search, soloActivos]);
+  }
 
   async function handleAdmitir(data: AdmitirPayload) {
     await admitir.mutateAsync(data);
@@ -92,7 +93,7 @@ export default function OcupacionesList() {
           <div className="flex-1">
             <SearchInput
               value={search}
-              onChange={setSearch}
+              onChange={handleSearchChange}
               placeholder="Buscar paciente o ubicación..."
             />
           </div>
@@ -147,6 +148,7 @@ export default function OcupacionesList() {
         )}
       </div>
       <AdmitirForm
+        key={showAdmitir ? "open" : "closed"}
         isOpen={showAdmitir}
         onClose={() => setShowAdmitir(false)}
         onSubmit={handleAdmitir}

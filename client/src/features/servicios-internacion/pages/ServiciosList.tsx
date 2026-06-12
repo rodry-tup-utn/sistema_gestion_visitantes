@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Building } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "../../auth/context/AuthContext";
+import { useAuth } from "../../auth/context/useAuth";
 import {
   useServicios,
   useSearchServicios,
@@ -40,9 +41,10 @@ export default function ServiciosList() {
   const isSearching = search.length >= 2;
   const list = isSearching ? searchData : data;
 
-  useEffect(() => {
+  function handleSearchChange(value: string) {
+    setSearch(value);
     setPage(0);
-  }, [search]);
+  }
 
   async function handleCreate(data: CreateServicioInternacionPayload) {
     await createMutation.mutateAsync(data);
@@ -65,11 +67,11 @@ export default function ServiciosList() {
       />
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="mb-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por nombre..."
-          />
+            <SearchInput
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Buscar por nombre o ubicación..."
+            />
         </div>
         {isLoading || searchLoading ? (
           <Spinner />
@@ -79,14 +81,17 @@ export default function ServiciosList() {
           <>
             <div className="space-y-3">
               {list.data.map((s: ServicioInternacion) => (
-                <Card key={s.id}>
-                  <div className="flex items-start justify-between gap-2">
+                <Card key={s.id} className="border-l-4 border-l-indigo-400">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                      <Building size={22} />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900">
+                      <p className="text-base font-bold text-gray-900">
                         {s.nombre_servicio}
                       </p>
                       {s.bloque_piso && (
-                        <p className="text-sm text-muted">{s.bloque_piso}</p>
+                        <p className="text-sm text-gray-500">{s.bloque_piso}</p>
                       )}
                     </div>
                     {isAdmin && (

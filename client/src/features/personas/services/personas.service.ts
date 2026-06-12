@@ -14,14 +14,14 @@ export async function getPersonas(
     .then((r) => r.data);
 }
 
+export async function getPersonaByDni(dni: string): Promise<Persona> {
+  return api.get(`/admin/persona/dni/${dni}`).then((r) => r.data);
+}
+
 export async function searchPersonas(
-  query: string,
-  offset = 0,
-  limit = 20,
+  params: { query?: string; dni?: string; offset?: number; limit?: number },
 ): Promise<PersonaPaginated> {
-  return api
-    .get("/admin/persona", { params: { query, offset, limit } })
-    .then((r) => r.data);
+  return api.get("/admin/persona", { params }).then((r) => r.data);
 }
 
 export async function createPersona(

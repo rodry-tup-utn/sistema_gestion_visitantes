@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { DoorOpen, DoorClosed, LogOut, AlertTriangle, UserPlus } from "lucide-react";
+import { DoorOpen, LogOut, AlertTriangle, UserPlus } from "lucide-react";
 
 export default function VisitDashboard() {
   const navigate = useNavigate();

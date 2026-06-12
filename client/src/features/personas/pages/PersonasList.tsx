@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { User } from "lucide-react";
 import {
   usePersonas,
   useSearchPersonas,
@@ -24,21 +25,22 @@ export default function PersonasList() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
-  const limit = 20;
+  const limit = 10;
   const { data, isLoading } = usePersonas(page * limit, limit);
-  const { data: searchData, isLoading: searchLoading } = useSearchPersonas(
-    search,
-    page * limit,
+  const { data: searchData, isLoading: searchLoading } = useSearchPersonas({
+    query: search,
+    offset: page * limit,
     limit,
-  );
+  });
   const createMutation = useCreatePersona();
   const updateMutation = useUpdatePersona();
   const isSearching = search.length >= 2;
   const list = isSearching ? searchData : data;
 
-  useEffect(() => {
+  function handleSearchChange(value: string) {
+    setSearch(value);
     setPage(0);
-  }, [search]);
+  }
 
   async function handleCreate(data: CreatePersonaPayload) {
     await createMutation.mutateAsync(data);
@@ -47,7 +49,8 @@ export default function PersonasList() {
   }
 
   async function handleUpdate(data: CreatePersonaPayload) {
-    await updateMutation.mutateAsync({ id: editingPersona!.id, data });
+    if (!editingPersona) return;
+    await updateMutation.mutateAsync({ id: editingPersona.id, data });
     setEditingPersona(null);
     toast.success("Persona actualizada");
   }
@@ -61,11 +64,11 @@ export default function PersonasList() {
       />
       <div className="mx-auto max-w-4xl px-4 py-6">
         <div className="mb-4">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Buscar por DNI, nombre o apellido..."
-          />
+            <SearchInput
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Buscar por nombre, apellido o DNI..."
+            />
         </div>
         {isLoading || searchLoading ? (
           <Spinner />
@@ -79,21 +82,26 @@ export default function PersonasList() {
           <>
             <div className="space-y-3">
               {list.data.map((p: Persona) => (
-                <Card key={p.id}>
-                  <div className="flex items-start justify-between gap-2">
+                <Card key={p.id} className="border-l-4 border-l-teal-400">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-600">
+                      <User size={22} />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900">
+                      <p className="text-base font-bold text-gray-900">
                         {p.nombre} {p.apellido}
                       </p>
-                      <p className="text-sm text-gray-500">DNI: {p.dni}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-right text-xs text-muted">
-                        {p.fecha_nacimiento && <p>Nac: {p.fecha_nacimiento}</p>}
-                        {p.telefono && <p>Tel: {p.telefono}</p>}
+                      <p className="text-sm font-medium text-teal-600">
+                        DNI {p.dni}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
+                        {p.fecha_nacimiento && (
+                          <span>Nac: {p.fecha_nacimiento}</span>
+                        )}
+                        {p.telefono && <span>Tel: {p.telefono}</span>}
                       </div>
-                      <EditButton onClick={() => setEditingPersona(p)} />
                     </div>
+                    <EditButton onClick={() => setEditingPersona(p)} />
                   </div>
                 </Card>
               ))}
@@ -109,13 +117,18 @@ export default function PersonasList() {
         )}
       </div>
       <PersonaForm
-        key={editingPersona?.id ?? "create"}
-        isOpen={showForm || !!editingPersona}
-        onClose={() => {
-          setShowForm(false);
-          setEditingPersona(null);
-        }}
-        onSubmit={editingPersona ? handleUpdate : handleCreate}
+        key="create"
+        isOpen={showForm}
+        title="Nueva Persona"
+        onClose={() => setShowForm(false)}
+        onSubmit={handleCreate}
+      />
+      <PersonaForm
+        key={editingPersona?.id ?? "edit"}
+        isOpen={!!editingPersona}
+        title="Editar Persona"
+        onClose={() => setEditingPersona(null)}
+        onSubmit={handleUpdate}
         initialData={editingPersona ?? undefined}
       />
     </>

@@ -13,7 +13,7 @@ export default function Egreso() {
   const [personaId, setPersonaId] = useState<number | null>(null);
   const [personaNombre, setPersonaNombre] = useState("");
 
-  const { data: searchData } = useSearchPersonas(searchDni, 0, 5);
+  const { data: searchData } = useSearchPersonas({ dni: searchDni });
   const { data: accIntData, isLoading: loadingInt } = useAccesosInternacion(0, 50, true, personaId ?? undefined);
   const { data: accAmlData, isLoading: loadingAml } = useAccesosAmbulatorio(0, 50, true, personaId ?? undefined);
   const finInt = useFinalizarAccesoInternacion();

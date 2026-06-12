@@ -1,29 +1,35 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { isAxiosError } from "axios";
 import { useCrearAccesoInternacion } from "../hooks/useAccesos";
+import { getPersonaByDni } from "../../personas/services/personas.service";
+import { useCreatePersona } from "../../personas/hooks/usePersonas";
+import PersonaForm from "../../personas/components/PersonaForm";
 import Button from "../../../shared/components/Button";
 import Card from "../../../shared/components/Card";
 import Spinner from "../../../shared/components/Spinner";
 import { useNavigate } from "react-router-dom";
-import { useSearchPersonas } from "../../personas/hooks/usePersonas";
 import {
   useOcupaciones,
   useSearchOcupaciones,
 } from "../../ocupacion/hooks/useOcupaciones";
+import type { Persona } from "../../../shared/types/persona";
 
 export default function IngresoInternacion() {
   const [dni, setDni] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [personaEncontrada, setPersonaEncontrada] = useState(false);
-  const [buscandoPersona, setBuscandoPersona] = useState(false);
+  const [persona, setPersona] = useState<{
+    nombre: string;
+    apellido: string;
+    encontrada: boolean;
+  }>({ nombre: "", apellido: "", encontrada: false });
   const [selectedOcupacionId, setSelectedOcupacionId] = useState<number | null>(
     null,
   );
   const [tipoAcceso, setTipoAcceso] = useState("Visita Estandar");
   const [pacienteSearch, setPacienteSearch] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { data: searchData } = useSearchPersonas(dni, 0, 5);
   const { data: ocupacionesData, isLoading } = useOcupaciones(0, 10, true);
   const { data: searchPacientesData, isLoading: searchPacientesLoading } =
     useSearchOcupaciones(pacienteSearch, 0, 20, true);
@@ -38,49 +44,63 @@ export default function IngresoInternacion() {
     setSelectedOcupacionId(null);
   }
   const crear = useCrearAccesoInternacion();
+  const createPersona = useCreatePersona();
   const navigate = useNavigate();
 
-  function handleBuscarPersona() {
-    if (!dni || dni.length < 6) {
+  async function handleBuscarPersona() {
+    if (dni.length < 6) {
       toast.error("Ingresá al menos 6 dígitos del DNI");
       return;
     }
-    setBuscandoPersona(true);
-    const found = searchData?.data.find((p) => p.dni === dni);
-    if (found) {
-      setNombre(found.nombre);
-      setApellido(found.apellido);
-      setPersonaEncontrada(true);
+    setSearching(true);
+    try {
+      const found = await getPersonaByDni(dni);
+      setPersona({
+        nombre: found.nombre,
+        apellido: found.apellido,
+        encontrada: true,
+      });
       toast.success(`Persona encontrada: ${found.nombre} ${found.apellido}`);
-    } else {
-      setPersonaEncontrada(false);
-      setNombre("");
-      setApellido("");
-      toast.info("Persona no encontrada. Completá los datos para crearla.");
+    } catch {
+      setPersona({ nombre: "", apellido: "", encontrada: false });
+      setShowCreateModal(true);
+    } finally {
+      setSearching(false);
     }
-    setBuscandoPersona(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!dni || !nombre || !apellido || !selectedOcupacionId) {
+    if (!dni || !persona.nombre || !persona.apellido || !selectedOcupacionId) {
       toast.error("Completá todos los campos");
       return;
     }
-    await crear.mutateAsync({
-      persona_dni: dni,
-      persona_nombre: nombre,
-      persona_apellido: apellido,
-      ocupacion_paciente_id: selectedOcupacionId,
-      tipo_acceso: tipoAcceso,
-    });
-    toast.success("Ingreso registrado");
-    setDni("");
-    setNombre("");
-    setApellido("");
-    setPersonaEncontrada(false);
-    setSelectedOcupacionId(null);
-    navigate("/porteria/visitantes");
+    try {
+      await crear.mutateAsync({
+        persona_dni: dni,
+        persona_nombre: persona.nombre,
+        persona_apellido: persona.apellido,
+        ocupacion_paciente_id: selectedOcupacionId,
+        tipo_acceso: tipoAcceso,
+      });
+      toast.success("Ingreso registrado");
+      setDni("");
+      setPersona({ nombre: "", apellido: "", encontrada: false });
+      setSelectedOcupacionId(null);
+      navigate("/porteria/visitantes");
+    } catch (err: unknown) {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.detail ?? "Error al registrar ingreso"
+        : "Error al registrar ingreso";
+      toast.error(msg);
+    }
+  }
+
+  async function handleCreatePersona(data: Parameters<typeof createPersona.mutateAsync>[0]) {
+    await createPersona.mutateAsync(data);
+    setPersona({ nombre: data.nombre, apellido: data.apellido, encontrada: true });
+    setShowCreateModal(false);
+    toast.success("Persona creada exitosamente");
   }
 
   return (
@@ -102,9 +122,10 @@ export default function IngresoInternacion() {
                 </label>
                 <input
                   value={dni}
+                  minLength={6}
                   onChange={(e) => {
                     setDni(e.target.value);
-                    setPersonaEncontrada(false);
+                    setPersona({ nombre: "", apellido: "", encontrada: false });
                   }}
                   className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
@@ -113,7 +134,7 @@ export default function IngresoInternacion() {
                 type="button"
                 variant="secondary"
                 onClick={handleBuscarPersona}
-                loading={buscandoPersona}
+                loading={searching}
               >
                 Buscar
               </Button>
@@ -124,10 +145,12 @@ export default function IngresoInternacion() {
                   Nombre
                 </label>
                 <input
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  readOnly={personaEncontrada}
-                  className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${personaEncontrada ? "bg-gray-100 text-gray-500" : "border-gray-300"}`}
+                  value={persona.nombre}
+                  onChange={(e) =>
+                    setPersona({ ...persona, nombre: e.target.value })
+                  }
+                  readOnly={persona.encontrada}
+                  className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${persona.encontrada ? "bg-gray-100 text-gray-500" : "border-gray-300"}`}
                 />
               </div>
               <div>
@@ -135,10 +158,12 @@ export default function IngresoInternacion() {
                   Apellido
                 </label>
                 <input
-                  value={apellido}
-                  onChange={(e) => setApellido(e.target.value)}
-                  readOnly={personaEncontrada}
-                  className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${personaEncontrada ? "bg-gray-100 text-gray-500" : "border-gray-300"}`}
+                  value={persona.apellido}
+                  onChange={(e) =>
+                    setPersona({ ...persona, apellido: e.target.value })
+                  }
+                  readOnly={persona.encontrada}
+                  className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 ${persona.encontrada ? "bg-gray-100 text-gray-500" : "border-gray-300"}`}
                 />
               </div>
             </div>
@@ -204,6 +229,14 @@ export default function IngresoInternacion() {
           Registrar Ingreso
         </Button>
       </form>
+
+      <PersonaForm
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Nueva Persona"
+        initialData={{ dni } as Persona}
+        onSubmit={handleCreatePersona}
+      />
     </div>
   );
 }

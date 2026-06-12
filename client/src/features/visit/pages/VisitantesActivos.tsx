@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { RotateCcw } from "lucide-react";
 import {
@@ -51,9 +51,20 @@ export default function VisitantesActivos() {
   const countInt = items.filter((v) => v.tipo === "internacion").length;
   const countAmb = items.filter((v) => v.tipo === "ambulatorio").length;
 
-  useEffect(() => {
+  function handleQueryChange(value: string) {
+    setQuery(value);
     setPage(0);
-  }, [query, dni, tipoAcceso]);
+  }
+
+  function handleDniChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setDni(e.target.value);
+    setPage(0);
+  }
+
+  function handleTipoAccesoChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setTipoAcceso(e.target.value);
+    setPage(0);
+  }
 
   function handleLimpiar() {
     setQuery("");
@@ -108,19 +119,19 @@ export default function VisitantesActivos() {
         <div className="flex-1">
           <SearchInput
             value={query}
-            onChange={setQuery}
+            onChange={handleQueryChange}
             placeholder="Buscar por nombre o destino..."
           />
         </div>
         <input
           value={dni}
-          onChange={(e) => setDni(e.target.value)}
+          onChange={handleDniChange}
           placeholder="Filtrar por DNI..."
           className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-40"
         />
         <select
           value={tipoAcceso}
-          onChange={(e) => setTipoAcceso(e.target.value)}
+          onChange={handleTipoAccesoChange}
           className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:w-40"
         >
           {tipoAccesoOptions.map((opt) => (

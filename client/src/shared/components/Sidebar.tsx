@@ -11,9 +11,10 @@ import {
   AlertTriangle,
   UserPlus,
   UserCheck,
+  User as UserIcon,
   X,
 } from "lucide-react";
-import type { User } from "../../features/auth/context/AuthContext";
+import type { User } from "../types/user";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -30,16 +31,61 @@ interface NavLink {
 
 const navLinks: NavLink[] = [
   { label: "Dashboard", path: "/dashboard", icon: <Home size={18} /> },
-  { label: "Ingreso Internación", path: "/porteria/ingreso-internacion", icon: <Bed size={18} /> },
-  { label: "Ingreso Ambulatorio", path: "/porteria/ingreso-ambulatorio", icon: <UserPlus size={18} /> },
-  { label: "Visitantes", path: "/porteria/visitantes", icon: <UserCheck size={18} /> },
-  { label: "Alertas", path: "/porteria/alertas", icon: <AlertTriangle size={18} /> },
-  { label: "Personas", path: "/admin/personas", icon: <ClipboardList size={18} /> },
-  { label: "Ocupación", path: "/admin/ocupacion", icon: <Stethoscope size={18} /> },
-  { label: "Usuarios", path: "/admin/users", icon: <Users size={18} />, adminOnly: true },
-  { label: "Serv. Internación", path: "/admin/servicios-internacion", icon: <Building size={18} />, adminOnly: true },
-  { label: "Camas", path: "/admin/internacion", icon: <Hospital size={18} />, adminOnly: true },
-  { label: "Serv. Ambulatorios", path: "/admin/servicios-ambulatorios", icon: <DoorOpen size={18} />, adminOnly: true },
+  { label: "Mi Perfil", path: "/profile", icon: <UserIcon size={18} /> },
+  {
+    label: "Ingreso Internación",
+    path: "/porteria/ingreso-internacion",
+    icon: <Bed size={18} />,
+  },
+  {
+    label: "Ingreso Ambulatorio",
+    path: "/porteria/ingreso-ambulatorio",
+    icon: <UserPlus size={18} />,
+  },
+  {
+    label: "Visitantes",
+    path: "/porteria/visitantes",
+    icon: <UserCheck size={18} />,
+  },
+  {
+    label: "Alertas",
+    path: "/porteria/alertas",
+    icon: <AlertTriangle size={18} />,
+  },
+  {
+    label: "Personas",
+    path: "/admin/personas",
+    icon: <ClipboardList size={18} />,
+  },
+  {
+    label: "Ocupación",
+    path: "/admin/ocupacion",
+    icon: <Stethoscope size={18} />,
+  },
+  {
+    label: "Usuarios",
+    path: "/admin/users",
+    icon: <Users size={18} />,
+    adminOnly: true,
+  },
+  {
+    label: "Serv. Internación",
+    path: "/admin/servicios-internacion",
+    icon: <Building size={18} />,
+    adminOnly: true,
+  },
+  {
+    label: "Camas",
+    path: "/admin/internacion",
+    icon: <Hospital size={18} />,
+    adminOnly: true,
+  },
+  {
+    label: "Serv. Ambulatorios",
+    path: "/admin/servicios-ambulatorios",
+    icon: <DoorOpen size={18} />,
+    adminOnly: true,
+  },
 ];
 
 export default function Sidebar({ isOpen, onClose, user }: SidebarProps) {

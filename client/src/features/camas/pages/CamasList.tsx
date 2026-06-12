@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Bed } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAuth } from "../../auth/context/AuthContext";
+import { useAuth } from "../../auth/context/useAuth";
 import {
   useCamas,
   useSearchCamas,
@@ -58,9 +59,20 @@ export default function CamasList() {
   const isSearching = search.length >= 2;
   const list = isSearching ? searchData : data;
 
-  useEffect(() => {
+  function handleSearchChange(value: string) {
+    setSearch(value);
     setPage(0);
-  }, [search, servicioId, estadoDisponibilidad]);
+  }
+
+  function handleServicioChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setServicioId(e.target.value ? Number(e.target.value) : undefined);
+    setPage(0);
+  }
+
+  function handleEstadoChangeFilter(e: React.ChangeEvent<HTMLSelectElement>) {
+    setEstadoDisponibilidad(e.target.value || undefined);
+    setPage(0);
+  }
 
   async function handleCreate(data: CreateCamaPayload) {
     await createMutation.mutateAsync(data);
@@ -111,15 +123,13 @@ export default function CamasList() {
           <div className="flex-1">
             <SearchInput
               value={search}
-              onChange={setSearch}
+              onChange={handleSearchChange}
               placeholder="Buscar por sala, cama o servicio..."
             />
           </div>
           <select
             value={servicioId ?? ""}
-            onChange={(e) =>
-              setServicioId(e.target.value ? Number(e.target.value) : undefined)
-            }
+            onChange={handleServicioChange}
             className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="">Todos los servicios</option>
@@ -131,9 +141,7 @@ export default function CamasList() {
           </select>
           <select
             value={estadoDisponibilidad ?? ""}
-            onChange={(e) =>
-              setEstadoDisponibilidad(e.target.value || undefined)
-            }
+            onChange={handleEstadoChangeFilter}
             className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           >
             <option value="">Todos los estados</option>
@@ -151,13 +159,16 @@ export default function CamasList() {
           <>
             <div className="space-y-3">
               {list.data.map((c: Cama) => (
-                <Card key={c.id}>
-                  <div className="flex items-start justify-between gap-2">
+                <Card key={c.id} className="border-l-4 border-l-blue-400">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <Bed size={22} />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-900">
-                        Sala {c.sala} - Cama {c.cama}
+                      <p className="text-base font-bold text-gray-900">
+                        Sala {c.sala} — Cama {c.cama}
                       </p>
-                      <p className="text-sm text-muted">
+                      <p className="text-sm text-gray-500">
                         {c.servicio_nombre_cache}
                       </p>
                     </div>

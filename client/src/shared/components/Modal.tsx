@@ -7,14 +7,15 @@ interface Props {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  className?: string;
 }
 
-export default function Modal({ isOpen, onClose, title, children, footer }: Props) {
+export default function Modal({ isOpen, onClose, title, children, footer, className }: Props) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-xl bg-card p-6 shadow-xl">
+      <div className={`w-full max-w-md rounded-xl bg-card p-6 shadow-xl ${className ?? ""}`}>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">{title}</h2>
           <button onClick={onClose} className="text-muted hover:text-gray-600">

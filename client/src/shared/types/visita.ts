@@ -1,9 +1,17 @@
+export type TipoAcceso = "Urgencia" | "Cuidador" | "Visita";
+
+export const TIEMPOS_ACCESO: Record<TipoAcceso, number> = {
+  Urgencia: 45,
+  Cuidador: 720,
+  Visita: 120,
+};
+
 export interface AccesoInternacion {
   id: number;
   persona_id: number;
   ocupacion_paciente_id: number;
   internacion_id: number;
-  tipo_acceso: string;
+  tipo_acceso: TipoAcceso;
   fecha_ingreso: string;
   fecha_salida: string | null;
   estado: string;
@@ -24,14 +32,14 @@ export interface CreateAccesoInternacionPayload {
   persona_nombre: string;
   persona_apellido: string;
   ocupacion_paciente_id: number;
-  tipo_acceso: string;
+  tipo_acceso: TipoAcceso;
 }
 
 export interface AccesoAmbulatorio {
   id: number;
   persona_id: number;
   servicio_ambulatorio_id: number;
-  tipo_acceso: string;
+  tipo_acceso: TipoAcceso;
   fecha_ingreso: string;
   fecha_salida: string | null;
   estado: string;
@@ -51,7 +59,7 @@ export interface CreateAccesoAmbulatorioPayload {
   persona_nombre: string;
   persona_apellido: string;
   servicio_ambulatorio_id: number;
-  tipo_acceso: string;
+  tipo_acceso: TipoAcceso;
 }
 
 export interface AccesoVencidoItem {
@@ -59,7 +67,7 @@ export interface AccesoVencidoItem {
   tipo: "internacion" | "ambulatorio";
   persona_nombre_cache: string;
   destino_cache: string;
-  tipo_acceso: string;
+  tipo_acceso: TipoAcceso;
   fecha_ingreso: string;
   minutos_transcurridos: number;
 }
@@ -75,7 +83,7 @@ export interface AccesoActivoItem {
   persona_nombre_cache: string;
   persona_dni: string;
   destino_cache: string;
-  tipo_acceso: string;
+  tipo_acceso: TipoAcceso;
   fecha_ingreso: string;
   minutos_transcurridos: number;
   vencido: boolean;
