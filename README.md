@@ -12,7 +12,9 @@
 </div>
 
 ---
-
+## 👤 Alumnos
+- **Ramirez, Rodrigo**
+- **Mercado, Leandro**
 ## 📸 Capturas de Pantalla
 
 > Ver todas las capturas en [`SCREENSHOTS.md`](./SCREENSHOTS.md).
