@@ -4,9 +4,10 @@ import jwt
 from sqlmodel import Session
 from app.core.config import settings
 from app.core.database import get_session
-from server.app.modules.user.service import UserService
+from app.modules.user.service import UserService
 from typing import Annotated
-from app.modules.user.schemas import UserDetailRead, TokenPayloadData
+from app.modules.user.schemas import TokenPayloadData
+from app.modules.user.schemas import UserResponse
 
 
 class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
@@ -57,7 +58,7 @@ def get_token_payload(
         if user_id is None or role is None or name is None:
             raise unauthorized_exception
 
-        return TokenPayloadData(id=int(user_id), roles=role, name=name)
+        return TokenPayloadData(id=int(user_id), role=role, name=name)
     except jwt.PyJWTError:
         raise unauthorized_exception
 
@@ -65,9 +66,9 @@ def get_token_payload(
 def get_current_user(
     token_data: TokenPayloadData = Depends(get_token_payload),
     svc: UserService = Depends(get_user_service),
-) -> UserDetailRead:
+) -> UserResponse:
     try:
-        user = svc.get_user_with_active_roles(token_data.id)
+        user = svc.get_active_by_id(token_data.id)
         return user
     except HTTPException:
         raise unauthorized_exception
@@ -75,10 +76,10 @@ def get_current_user(
 
 def require_role(allowed_roles: list[str]):
     async def role_checker(
-        current_user: Annotated[UserDetailRead, Depends(get_current_user)],
-    ) -> UserDetailRead:
+        current_user: Annotated[UserResponse, Depends(get_current_user)],
+    ) -> UserResponse:
 
-        if current_user in allowed_roles:
+        if current_user.role in allowed_roles:
             return current_user
 
         raise HTTPException(

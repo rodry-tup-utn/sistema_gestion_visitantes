@@ -4,14 +4,17 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
 
-    postgres_user: str = "admin"
-    postgres_password: str = "admin"
-    postgres_db: str = "db_integrador"
-    postgres_host: str = "localhost"
-    postgres_port: int = 5433
-    secret_key: str = "secret-key-dev"
+    postgres_user: str = "CHANGE_ME"
+    postgres_password: str = "CHANGE_ME"
+    postgres_db: str = "CHANGE_IN_PRODUCTION"
+    postgres_host: str = "LOCALHOST"
+    postgres_port: int = 5432
+    secret_key: str = "CHANGE_ME_IN_PRODUCTION"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    cookie_secure: bool = False
+    cookie_samesite: str = "lax"
 
     @computed_field
     @property

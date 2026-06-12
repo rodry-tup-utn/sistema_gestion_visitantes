@@ -1,0 +1,91 @@
+from datetime import datetime, timezone
+from sqlmodel import Session, select, col
+from app.core.repository import BaseRepository
+from app.modules.user.models import User
+from typing import Sequence
+from sqlalchemy import func, or_
+from app.modules.user.schemas import UserAuthData
+
+
+class UserRepository(BaseRepository["User"]):
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session, User)
+
+    def get_filtered(self, offset: int = 0, limit: int = 20) -> Sequence[User]:
+        statement = select(User).order_by(User.name).offset(offset).limit(limit)
+        return self.session.exec(statement).all()
+
+    def get_by_id(self, user_id: int, only_actives: bool = False) -> User | None:
+        statement = select(User).where(User.id == user_id)
+        if only_actives:
+            statement = statement.where(User.is_active == True)
+        return self.session.exec(statement).first()
+
+    def get_by_email(self, email: str) -> User | None:
+        statement = select(User).where(User.email == email)
+        return self.session.exec(statement).first()
+
+    def exists_by_email(self, email: str) -> bool:
+        statement = select(User.id).where(User.email == email)
+        return self.session.exec(statement).first() is not None
+
+    def get_active_by_email(self, email: str) -> User | None:
+        statement = select(User).where(User.email == email, User.is_active == True)
+        return self.session.exec(statement).first()
+
+    def deactivate(self, user: User) -> None:
+        user.is_active = False
+        user.updated_at = datetime.now(timezone.utc)
+        self.session.add(user)
+        self.session.flush()
+
+    def reactivate(self, user: User) -> User:
+        user.is_active = True
+        user.updated_at = datetime.now(timezone.utc)
+        self.session.add(user)
+        self.session.flush()
+        return user
+
+    def get_auth_credential(self, email: str) -> UserAuthData | None:
+        statement = select(User).where(User.email == email, User.is_active == True)
+        user = self.session.exec(statement).first()
+
+        if not user:
+            return None
+
+        return UserAuthData(
+            id=user.id,
+            hashed_pass=user.hashed_pass,
+            role=user.role,
+            name=user.name,
+        )
+
+    def search(self, query: str, offset: int = 0, limit: int = 20) -> Sequence[User]:
+        statement = (
+            select(User)
+            .offset(offset)
+            .limit(limit)
+            .where(
+                or_(
+                    col(User.name).ilike(f"%{query}%"),
+                    col(User.lastname).ilike(f"%{query}%"),
+                    col(User.email).ilike(f"%{query}%"),
+                )
+            )
+        )
+        return self.session.exec(statement).all()
+
+    def count_search_results(self, query: str) -> int:
+        statement = (
+            select(func.count())
+            .select_from(User)
+            .where(
+                or_(
+                    col(User.name).ilike(f"%{query}%"),
+                    col(User.lastname).ilike(f"%{query}%"),
+                    col(User.email).ilike(f"%{query}%"),
+                )
+            )
+        )
+        return self.session.exec(statement).one()

@@ -16,7 +16,7 @@ class BaseRepository(Generic[ModelT]):
 
         return self.session.get(self.model, record_id)
 
-    def get_all(self, offset: int = 0, limit: int = 20) -> Sequence[ModelT]:
+    def get_filtered(self, offset: int = 0, limit: int = 20) -> Sequence[ModelT]:
 
         return self.session.exec(select(self.model).offset(offset).limit(limit)).all()
 
@@ -27,9 +27,16 @@ class BaseRepository(Generic[ModelT]):
     def add(self, instance: ModelT) -> ModelT:
 
         self.session.add(instance)
-        self.session.flush()  # obtiene el ID sin hacer commit
+        self.session.flush()
         self.session.refresh(instance)
         return instance
+
+    def add_from_schema(
+        self, schema: SQLModel, exclude: set[str] | None = None
+    ) -> ModelT:
+        data = schema.model_dump(exclude=exclude or set())
+        instance = self.model(**data)
+        return self.add(instance)
 
     def delete(self, instance: ModelT) -> None:
 
