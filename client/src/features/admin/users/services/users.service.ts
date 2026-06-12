@@ -29,3 +29,9 @@ export async function reactivateUser(userId: number): Promise<User> {
   const res = await api.patch<User>(`/admin/user/${userId}/reactivate`);
   return res.data;
 }
+
+export async function resetPassword(userId: number): Promise<void> {
+  await api.patch(`/admin/user/${userId}/reset-password`, {
+    new_pass: import.meta.env.VITE_DEFAULT_PASSWORD || "123456",
+  });
+}

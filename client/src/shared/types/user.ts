@@ -28,3 +28,14 @@ export interface CreateUserPayload {
 export interface UpdateRolePayload {
   role: "ADMIN" | "OPERATOR";
 }
+
+export interface UpdateProfilePayload {
+  name?: string;
+  lastname?: string;
+  email?: string;
+}
+
+export interface UpdatePasswordPayload {
+  old_pass: string;
+  new_pass: string;
+}

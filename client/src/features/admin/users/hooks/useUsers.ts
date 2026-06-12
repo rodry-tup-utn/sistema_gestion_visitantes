@@ -51,3 +51,11 @@ export function useReactivateUser() {
     onSuccess: () => qc.invalidateQueries({ queryKey: USERS_KEY }),
   });
 }
+
+export function useResetPassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => usersService.resetPassword(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: USERS_KEY }),
+  });
+}
