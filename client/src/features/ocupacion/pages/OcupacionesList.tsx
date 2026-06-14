@@ -103,7 +103,7 @@ export default function OcupacionesList() {
                 setPage(0);
                 setSoloActivos(true);
               }}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${soloActivos ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition cursor-pointer ${soloActivos ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
             >
               Activos
             </button>
@@ -112,7 +112,7 @@ export default function OcupacionesList() {
                 setPage(0);
                 setSoloActivos(false);
               }}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${!soloActivos ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition cursor-pointer ${!soloActivos ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
             >
               Todos
             </button>
