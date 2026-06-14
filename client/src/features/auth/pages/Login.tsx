@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type SyntheticEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogIn } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +40,26 @@ export default function Login() {
     }
   }
 
+  type DemoUser = "admin" | "operator";
+
+  const demoCredentials: Record<DemoUser, { email: string; password: string }> =
+    {
+      admin: {
+        email: import.meta.env.VITE_ADMIN_USER_DEMO,
+        password: import.meta.env.VITE_ADMIN_USER_PASS,
+      },
+      operator: {
+        email: import.meta.env.VITE_OPERATOR_USER_DEMO,
+        password: import.meta.env.VITE_OPERATOR_USER_PASS,
+      },
+    };
+
+  const handleDemo = (e: SyntheticEvent, user: DemoUser) => {
+    e.preventDefault();
+    setEmail(demoCredentials[user].email);
+    setPassword(demoCredentials[user].password);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">
       <div className="w-full max-w-sm">
@@ -56,7 +76,10 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <input
@@ -71,7 +94,10 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Contraseña
               </label>
               <input
@@ -88,11 +114,27 @@ export default function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-primary-hover disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-lg cursor-pointer bg-primary px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-primary-hover disabled:opacity-60"
             >
               <LogIn size={18} />
               {submitting ? "Ingresando…" : "Ingresar"}
             </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="w-full px-4 py-2 text-sm font-semibold uppercase tracking-tighter text-green-800 bg-green-100 border-2 border-green-800 rounded-lg cursor-pointer hover:bg-green-300"
+                onClick={(e) => handleDemo(e, "operator")}
+              >
+                Demo Operador
+              </button>
+              <button
+                type="button"
+                className="w-full px-4 py-2 text-sm font-semibold uppercase tracking-tighter text-violet-800 bg-violet-100 border-2 border-violet-800 rounded-lg cursor-pointer hover:bg-violet-300"
+                onClick={(e) => handleDemo(e, "admin")}
+              >
+                Demo Admin
+              </button>
+            </div>
           </form>
         </div>
       </div>
