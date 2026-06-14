@@ -134,6 +134,7 @@ export default function AdmitirForm({
                 variant="secondary"
                 onClick={handleBuscarDni}
                 loading={searchingDni}
+                className="flex gap-2 items-center py-2.5"
               >
                 <Search size={16} />
                 Buscar
