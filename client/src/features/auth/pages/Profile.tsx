@@ -91,6 +91,9 @@ export default function Profile() {
       toast.error("Las contraseñas nuevas no coinciden");
       return;
     }
+    if (newPass == oldPass) {
+      toast.error("La nueva contraseña debe ser diferente a la anterior");
+    }
     setChangingPass(true);
     try {
       await changePassword({ old_pass: oldPass, new_pass: newPass });
