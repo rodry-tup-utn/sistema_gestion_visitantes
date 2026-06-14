@@ -7,12 +7,21 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<string, string> = {
-  primary: "bg-primary text-white hover:bg-primary-hover shadow disabled:opacity-60",
-  secondary: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50",
-  danger: "bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50",
+  primary:
+    "bg-primary text-white hover:bg-primary-hover shadow disabled:opacity-60 cursor-pointer",
+  secondary:
+    "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-50 cursor-pointer",
+  danger:
+    "bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50 cursor-pointer",
 };
 
-export default function Button({ variant = "primary", loading, children, className = "", ...rest }: Props) {
+export default function Button({
+  variant = "primary",
+  loading,
+  children,
+  className = "",
+  ...rest
+}: Props) {
   return (
     <button
       {...rest}
